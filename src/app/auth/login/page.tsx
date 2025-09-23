@@ -6,13 +6,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
+// import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  // const router = useRouter()
   const sb = supabaseBrowser()
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -34,7 +34,7 @@ export default function LoginPage() {
           window.location.href = '/'
         }, 1000)
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Bir hata oluştu')
     } finally {
       setLoading(false)

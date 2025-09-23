@@ -104,8 +104,13 @@ export default function MuvekkillerPage() {
       setClientForm({ full_name: '', tc_no: '', phone: '', email: '' })
       setClientDialogOpen(false)
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'message' in error) {
+        // @ts-expect-error narrow for toast
+        toast.error((error as any).message as string)
+      } else {
+        toast.error('Bir hata oluştu')
+      }
     }
   }
 
@@ -137,8 +142,13 @@ export default function MuvekkillerPage() {
       setEditingClient(null)
       setClientDialogOpen(false)
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'message' in error) {
+        // @ts-expect-error narrow for toast
+        toast.error((error as any).message as string)
+      } else {
+        toast.error('Bir hata oluştu')
+      }
     }
   }
 
@@ -151,8 +161,13 @@ export default function MuvekkillerPage() {
       
       toast.success('Müvekkil silindi')
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'message' in error) {
+        // @ts-expect-error narrow for toast
+        toast.error((error as any).message as string)
+      } else {
+        toast.error('Bir hata oluştu')
+      }
     }
   }
 

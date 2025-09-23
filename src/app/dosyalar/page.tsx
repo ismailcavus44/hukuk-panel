@@ -120,8 +120,9 @@ export default function DosyalarPage() {
       setClientForm({ full_name: '', tc_no: '', phone: '', email: '' })
       setClientDialogOpen(false)
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (error: unknown) {
+      const msg = (error as { message?: unknown })?.message
+      toast.error(typeof msg === 'string' ? msg : 'Bir hata oluştu')
     }
   }
 
@@ -136,7 +137,7 @@ export default function DosyalarPage() {
       }
 
       // Sigorta başvurusu için geri sayım hesapla
-      let caseData: any = {
+      let caseData: Record<string, unknown> = {
         ...caseForm,
         damage_amount: caseForm.damage_amount ? parseFloat(caseForm.damage_amount) : null,
         created_by: user.id
@@ -167,8 +168,9 @@ export default function DosyalarPage() {
       setSelectedClient(null)
       setCaseDialogOpen(false)
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (error: unknown) {
+      const msg = (error as { message?: unknown })?.message
+      toast.error(typeof msg === 'string' ? msg : 'Bir hata oluştu')
     }
   }
 
@@ -232,8 +234,9 @@ export default function DosyalarPage() {
       setEditingCase(null)
       setCaseDialogOpen(false)
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (error: unknown) {
+      const msg = (error as { message?: unknown })?.message
+      toast.error(typeof msg === 'string' ? msg : 'Bir hata oluştu')
     }
   }
 
@@ -246,8 +249,9 @@ export default function DosyalarPage() {
       
       toast.success('Dosya silindi')
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (error: unknown) {
+      const msg = (error as { message?: unknown })?.message
+      toast.error(typeof msg === 'string' ? msg : 'Bir hata oluştu')
     }
   }
 

@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { supabaseBrowser } from "@/lib/supabase/client"
-import { FileText, Calculator, Users, TrendingUp, UserPlus } from 'lucide-react'
+import { FileText, Calculator, Users, TrendingUp } from 'lucide-react'
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
@@ -11,7 +11,7 @@ export default function Dashboard() {
     totalCalculations: 0,
     totalDocuments: 0
   })
-  const [recentCases, setRecentCases] = useState([])
+  const [recentCases, setRecentCases] = useState<Array<{id:string; title:string; case_no?:string; status:string; created_at:string}>>([])
   const sb = supabaseBrowser()
 
   useEffect(() => {
@@ -117,7 +117,7 @@ export default function Dashboard() {
         <CardContent>
           {recentCases.length > 0 ? (
             <div className="space-y-4">
-              {recentCases.map((caseItem: any) => (
+              {recentCases.map((caseItem) => (
                 <div key={caseItem.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
                     <h3 className="font-medium text-gray-900">{caseItem.title}</h3>

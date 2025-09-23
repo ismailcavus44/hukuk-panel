@@ -123,8 +123,13 @@ export default function MasrafTakipPage() {
       })
       setExpenseDialogOpen(false)
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'message' in error) {
+        // @ts-expect-error narrow for toast
+        toast.error((error as any).message as string)
+      } else {
+        toast.error('Bir hata oluştu')
+      }
     }
   }
 
@@ -169,8 +174,13 @@ export default function MasrafTakipPage() {
       setEditingExpense(null)
       setExpenseDialogOpen(false)
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'message' in error) {
+        // @ts-expect-error narrow for toast
+        toast.error((error as any).message as string)
+      } else {
+        toast.error('Bir hata oluştu')
+      }
     }
   }
 
@@ -183,8 +193,13 @@ export default function MasrafTakipPage() {
       
       toast.success('Masraf silindi')
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'message' in error) {
+        // @ts-expect-error narrow for toast
+        toast.error((error as any).message as string)
+      } else {
+        toast.error('Bir hata oluştu')
+      }
     }
   }
 

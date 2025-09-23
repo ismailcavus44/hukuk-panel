@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { FileText, Download, Eye } from 'lucide-react'
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx'
+import { Document, Packer, Paragraph, TextRun, AlignmentType } from 'docx'
 import { saveAs } from 'file-saver'
 import { toast } from 'sonner'
 
@@ -67,7 +67,7 @@ export default function DilekcePage() {
             new Paragraph({
               children: [
                 new TextRun({
-                  text: `${form.mahkeme} MAHKEMESİ'NE`,
+                  text: `${form.mahkeme} MAHKEMESİ’NE`,
                   bold: true,
                   size: 28,
                 }),
@@ -395,7 +395,7 @@ export default function DilekcePage() {
             <div className="p-6 bg-white border rounded-lg min-h-[600px]">
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold mb-4">{form.dilekceTuru || 'Dilekçe Türü'}</h2>
-                <h3 className="text-xl font-bold">{form.mahkeme || 'Mahkeme'} MAHKEMESİ'NE</h3>
+                <h3 className="text-xl font-bold">{form.mahkeme || 'Mahkeme'} MAHKEMESİ’NE</h3>
               </div>
 
               <div className="space-y-4 mb-8">

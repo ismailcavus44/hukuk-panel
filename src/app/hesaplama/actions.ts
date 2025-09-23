@@ -1,7 +1,7 @@
 'use server'
 import { supabaseServer } from '@/lib/supabase/server'
 
-export async function saveCalc(data: {case_id?: string; type: 'kidem'|'ihbar'; input: any; result: any}) {
+export async function saveCalc(data: {case_id?: string; type: 'kidem'|'ihbar'; input: unknown; result: unknown}) {
   const sb = supabaseServer()
   const { data: { user } } = await sb.auth.getUser()
   if (!user) throw new Error('Giriş gerekli')
