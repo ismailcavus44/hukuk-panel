@@ -34,3 +34,5 @@ create policy "calcs_select_own" on public.calculations
 for select using (auth.uid() = created_by);
 create policy "calcs_insert_own" on public.calculations
 for insert with check (auth.uid() = created_by);
+
+

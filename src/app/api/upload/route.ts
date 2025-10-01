@@ -12,6 +12,21 @@ export async function POST(req: NextRequest) {
   const caseId = String(form.get('case_id') || '')
   if (!file) return NextResponse.json({ error: 'no file' }, { status: 400 })
 
+  // Temel içerik doğrulama: boyut ve mime/uzantı kısıtları
+  const MAX_SIZE_BYTES = 25 * 1024 * 1024 // 25MB
+  if ((file as any)?.size && (file as any).size > MAX_SIZE_BYTES) {
+    return NextResponse.json({ error: 'file too large' }, { status: 413 })
+  }
+  const allowedMime = [
+    'application/pdf',
+    'image/png',
+    'image/jpeg',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
+  ]
+  if (file.type && !allowedMime.includes(file.type)) {
+    return NextResponse.json({ error: 'unsupported file type' }, { status: 415 })
+  }
+
   const ext = file.name.split('.').pop()
   const path = `${user.id}/${caseId || 'unassigned'}/${randomUUID()}.${ext || 'bin'}`
 
@@ -33,3 +48,7 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true, path })
 }
+
+
+
+

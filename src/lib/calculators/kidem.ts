@@ -7,3 +7,4 @@ export function calculateKidem(i: KidemInput): KidemResult {
   if (i.tavan) tutar = Math.min(tutar, i.tavan * totalYear)
   return { tutar, kalemler: [{label: 'Toplam yıl', value: Number(totalYear.toFixed(4))}] }
 }
+

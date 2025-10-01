@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button'
 import { 
   LayoutDashboard, 
   FileText, 
-  Calculator, 
   Users,
   FileEdit,
+  DollarSign,
+  CheckSquare,
   LogOut,
   Menu,
   X
@@ -21,7 +22,8 @@ const menuItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/muvekkiller', label: 'Müvekkil Yönetimi', icon: Users },
   { href: '/dosyalar', label: 'Dosya Yönetimi', icon: FileText },
-  { href: '/hesaplama', label: 'Masraf Takibi', icon: Calculator },
+  { href: '/gelir-gider', label: 'Gelir-Gider Takibi', icon: DollarSign },
+  { href: '/is-takip', label: 'İş Takip', icon: CheckSquare },
   { href: '/dilekce', label: 'Dilekçe Oluştur', icon: FileEdit },
 ]
 

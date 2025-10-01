@@ -1,10 +1,38 @@
--- Storage RLS (bucket `documents`)
--- Supabase → Storage → `documents` → Policies:
+-- Storage bucket 'documents' için sıkı politika örneği
+-- Not: Bu SQL'i Supabase SQL Editor'da çalıştırın.
 
--- Sadece sahibi okusun/insersin/silsin (storage.objects üzerinde)
-create policy "read_own_files" on storage.objects
-for select using (auth.uid() = owner);
-create policy "upload_own_files" on storage.objects
-for insert with check (auth.uid() = owner);
-create policy "delete_own_files" on storage.objects
-for delete using (auth.uid() = owner);
+-- Bucket private olmalı (Dashboard > Storage > documents > Private)
+
+-- RLS: storage.objects tablosunda politikalar
+alter table storage.objects enable row level security;
+
+-- Sadece sahibi görebilsin (metadata->>'owner' = auth.uid())
+create policy "documents_select_owner"
+on storage.objects for select
+using (
+  bucket_id = 'documents'
+  and (metadata ->> 'owner') is not null
+  and (metadata ->> 'owner') = auth.uid()::text
+);
+
+-- Sadece sahibi yükleyebilsin
+create policy "documents_insert_owner"
+on storage.objects for insert
+with check (
+  bucket_id = 'documents'
+  and (metadata ->> 'owner') is not null
+  and (metadata ->> 'owner') = auth.uid()::text
+);
+
+-- Sadece sahibi silebilsin
+create policy "documents_delete_owner"
+on storage.objects for delete
+using (
+  bucket_id = 'documents'
+  and (metadata ->> 'owner') is not null
+  and (metadata ->> 'owner') = auth.uid()::text
+);
+
+-- İsteğe bağlı: Public erişimi tamamen kapatma (Bucket private + public policy yok)
+
+

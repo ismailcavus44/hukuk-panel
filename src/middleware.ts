@@ -55,7 +55,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Sadece auth sayfalarını kontrol et
-    '/auth/:path*',
+    // Tüm uygulama yollarını kontrol et (api ve statikler hariç)
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 }

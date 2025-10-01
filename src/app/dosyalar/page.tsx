@@ -9,10 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, Upload, Edit, Trash2 } from 'lucide-react'
+import { Plus, Search, Upload, Edit, Trash2, Car } from 'lucide-react'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import CountdownTimer from '@/components/countdown-timer'
 
 interface Client {
   id: string
@@ -23,24 +22,35 @@ interface Client {
   created_at: string
 }
 
+interface CarDealer {
+  id: string
+  name: string
+  phone?: string
+  email?: string
+  address?: string
+  created_at: string
+}
+
 interface Case {
   id: string
   title: string
   case_no?: string
+  vehicle_plate?: string
   description?: string
   status: string
   client_id?: string
+  car_dealer_id?: string
   damage_amount?: number
-  insurance_application_date?: string
-  countdown_expires_at?: string
-  is_countdown_active?: boolean
+  court_name?: string
   created_at: string
   client?: Client
+  car_dealer?: CarDealer
 }
 
 export default function DosyalarPage() {
   const [cases, setCases] = useState<Case[]>([])
   const [clients, setClients] = useState<Client[]>([])
+  const [carDealers, setCarDealers] = useState<CarDealer[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -49,24 +59,34 @@ export default function DosyalarPage() {
   const [clientDialogOpen, setClientDialogOpen] = useState(false)
   const [caseDialogOpen, setCaseDialogOpen] = useState(false)
   const [clientSelectDialogOpen, setClientSelectDialogOpen] = useState(false)
+  const [carDealerDialogOpen, setCarDealerDialogOpen] = useState(false)
+  const [carDealerStatsDialogOpen, setCarDealerStatsDialogOpen] = useState(false)
+  const [carDealerAddDialogOpen, setCarDealerAddDialogOpen] = useState(false)
   const [editingCase, setEditingCase] = useState<Case | null>(null)
+  const [editingCarDealer, setEditingCarDealer] = useState<CarDealer | null>(null)
   
   // Form states
   const [clientForm, setClientForm] = useState({ full_name: '', tc_no: '', phone: '', email: '' })
+  const [carDealerForm, setCarDealerForm] = useState({ name: '', phone: '', email: '', address: '' })
   const [caseForm, setCaseForm] = useState({ 
     title: '', 
     case_no: '', 
+    vehicle_plate: '', 
     description: '', 
     status: 'open', 
     client_id: '',
-    damage_amount: '' 
+    car_dealer_id: '',
+    damage_amount: '',
+    court_name: ''
   })
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
+  const [selectedCarDealer, setSelectedCarDealer] = useState<CarDealer | null>(null)
   
   // Dosya başlığı seçenekleri
   const caseTitles = [
     'Sigorta Başvurusu',
-    'Tahkim Başvurusu'
+    'Tahkim Başvurusu',
+    'Mahrumiyet İcra Dosyası'
   ]
   
   const sb = supabaseBrowser()
@@ -78,20 +98,22 @@ export default function DosyalarPage() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [casesResult, clientsResult] = await Promise.all([
+      const [casesResult, clientsResult, carDealersResult] = await Promise.all([
         sb.from('cases')
           .select(`
-            id, title, case_no, description, status, client_id, damage_amount,
-            insurance_application_date, countdown_expires_at, is_countdown_active,
+            id, title, case_no, vehicle_plate, description, status, client_id, car_dealer_id, damage_amount, court_name,
             created_at,
-            client:clients(id, full_name, phone, email)
+            client:clients(id, full_name, phone, email),
+            car_dealer:car_dealers(id, name, phone, email)
           `)
           .order('created_at', { ascending: false }),
-        sb.from('clients').select('*').order('full_name')
+        sb.from('clients').select('*').order('full_name'),
+        sb.from('car_dealers').select('*').order('name')
       ])
 
       setCases(casesResult.data || [])
       setClients(clientsResult.data || [])
+      setCarDealers(carDealersResult.data || [])
     } catch (error) {
       console.error('Veri yüklenirken hata:', error)
       toast.error('Veriler yüklenirken hata oluştu')
@@ -120,9 +142,79 @@ export default function DosyalarPage() {
       setClientForm({ full_name: '', tc_no: '', phone: '', email: '' })
       setClientDialogOpen(false)
       loadData()
-    } catch (error: unknown) {
-      const msg = (error as { message?: unknown })?.message
-      toast.error(typeof msg === 'string' ? msg : 'Bir hata oluştu')
+    } catch (error: any) {
+      toast.error(error.message)
+    }
+  }
+
+  const handleCreateCarDealer = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const { data: { user } } = await sb.auth.getUser()
+      if (!user) {
+        toast.error('Giriş yapmanız gerekiyor')
+        return
+      }
+
+      const { error } = await sb.from('car_dealers').insert({
+        ...carDealerForm,
+        created_by: user.id
+      })
+      if (error) throw error
+      
+      toast.success('Kaportacı başarıyla eklendi')
+      setCarDealerForm({ name: '', phone: '', email: '', address: '' })
+      setCarDealerAddDialogOpen(false)
+      loadData()
+    } catch (error: any) {
+      toast.error(error.message)
+    }
+  }
+
+  const handleEditCarDealer = (carDealer: CarDealer) => {
+    setEditingCarDealer(carDealer)
+    setCarDealerForm({
+      name: carDealer.name,
+      phone: carDealer.phone || '',
+      email: carDealer.email || '',
+      address: carDealer.address || ''
+    })
+    setCarDealerAddDialogOpen(true)
+  }
+
+  const handleUpdateCarDealer = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingCarDealer) return
+
+    try {
+      const { error } = await sb
+        .from('car_dealers')
+        .update(carDealerForm)
+        .eq('id', editingCarDealer.id)
+
+      if (error) throw error
+      
+      toast.success('Kaportacı bilgileri güncellendi')
+      setCarDealerForm({ name: '', phone: '', email: '', address: '' })
+      setEditingCarDealer(null)
+      setCarDealerAddDialogOpen(false)
+      loadData()
+    } catch (error: any) {
+      toast.error(error.message)
+    }
+  }
+
+  const handleDeleteCarDealer = async (id: string) => {
+    if (!confirm('Bu kaportacıyı silmek istediğinizden emin misiniz? Bu kaportacıya ait dosyalar da etkilenebilir.')) return
+    
+    try {
+      const { error } = await sb.from('car_dealers').delete().eq('id', id)
+      if (error) throw error
+      
+      toast.success('Kaportacı silindi')
+      loadData()
+    } catch (error: any) {
+      toast.error(error.message)
     }
   }
 
@@ -136,69 +228,49 @@ export default function DosyalarPage() {
         return
       }
 
-      // Sigorta başvurusu için geri sayım hesapla
-      let caseData: Record<string, unknown> = {
+      let caseData: any = {
         ...caseForm,
         damage_amount: caseForm.damage_amount ? parseFloat(caseForm.damage_amount) : null,
+        vehicle_plate: caseForm.vehicle_plate ? caseForm.vehicle_plate.toUpperCase() : null,
+        car_dealer_id: caseForm.car_dealer_id || null,
+        court_name: caseForm.court_name || null,
         created_by: user.id
-      }
-
-      if (caseForm.title === 'Sigorta Başvurusu') {
-        const now = new Date()
-        const expiresAt = new Date(now.getTime() + (15 * 24 * 60 * 60 * 1000)) // 15 gün sonra
-        
-        caseData = {
-          ...caseData,
-          insurance_application_date: now.toISOString(),
-          countdown_expires_at: expiresAt.toISOString(),
-          is_countdown_active: true
-        }
       }
 
       const { error } = await sb.from('cases').insert(caseData)
       if (error) throw error
       
-      if (caseForm.title === 'Sigorta Başvurusu') {
-        toast.success('Sigorta başvurusu oluşturuldu! 15 günlük süre başladı.')
-      } else {
-        toast.success('Dosya başarıyla oluşturuldu')
-      }
+      toast.success('Dosya başarıyla oluşturuldu')
       
-      setCaseForm({ title: '', case_no: '', description: '', status: 'open', client_id: '', damage_amount: '' })
+      setCaseForm({ title: '', case_no: '', vehicle_plate: '', description: '', status: 'open', client_id: '', car_dealer_id: '', damage_amount: '', court_name: '' })
       setSelectedClient(null)
+      setSelectedCarDealer(null)
       setCaseDialogOpen(false)
       loadData()
-    } catch (error: unknown) {
-      const msg = (error as { message?: unknown })?.message
-      toast.error(typeof msg === 'string' ? msg : 'Bir hata oluştu')
+    } catch (error: any) {
+      toast.error(error.message)
     }
   }
 
   const handleEditCase = (caseItem: Case) => {
-    // Sigorta başvurusu ve geri sayım aktifse düzenlemeyi engelle
-    if (caseItem.title === 'Sigorta Başvurusu' && caseItem.is_countdown_active) {
-      const now = new Date()
-      const expiresAt = new Date(caseItem.countdown_expires_at!)
-      
-      if (now < expiresAt) {
-        toast.error('Sigorta başvurusu dosyası 15 günlük süre bitmeden düzenlenemez!')
-        return
-      }
-    }
-
     setEditingCase(caseItem)
     setCaseForm({
       title: caseItem.title,
       case_no: caseItem.case_no || '',
+      vehicle_plate: caseItem.vehicle_plate || '',
       description: caseItem.description || '',
       status: caseItem.status,
       client_id: caseItem.client_id || '',
-      damage_amount: caseItem.damage_amount?.toString() || ''
+      car_dealer_id: caseItem.car_dealer_id || '',
+      damage_amount: caseItem.damage_amount?.toString() || '',
+      court_name: caseItem.court_name || ''
     })
     
-    // Müvekkil bilgisini bul ve set et
+    // Müvekkil ve kaportacı bilgilerini bul ve set et
     const client = clients.find(c => c.id === caseItem.client_id)
+    const carDealer = carDealers.find(cd => cd.id === caseItem.car_dealer_id)
     setSelectedClient(client || null)
+    setSelectedCarDealer(carDealer || null)
     
     setCaseDialogOpen(true)
   }
@@ -207,36 +279,33 @@ export default function DosyalarPage() {
     e.preventDefault()
     if (!editingCase) return
 
-    // Sigorta başvurusu dosyasında başlık değişikliğini engelle
-    if (editingCase.title === 'Sigorta Başvurusu' && caseForm.title !== 'Sigorta Başvurusu') {
-      toast.error('Sigorta başvurusu dosyasının başlığı değiştirilemez!')
-      return
-    }
-
     try {
       const { error } = await sb
         .from('cases')
         .update({
           title: caseForm.title,
           case_no: caseForm.case_no,
+          vehicle_plate: caseForm.vehicle_plate ? caseForm.vehicle_plate.toUpperCase() : null,
           description: caseForm.description,
           status: caseForm.status,
           client_id: caseForm.client_id,
-          damage_amount: caseForm.damage_amount ? parseFloat(caseForm.damage_amount) : null
+          car_dealer_id: caseForm.car_dealer_id || null,
+          damage_amount: caseForm.damage_amount ? parseFloat(caseForm.damage_amount) : null,
+          court_name: caseForm.court_name || null
         })
         .eq('id', editingCase.id)
 
       if (error) throw error
       
       toast.success('Dosya bilgileri güncellendi')
-      setCaseForm({ title: '', case_no: '', description: '', status: 'open', client_id: '', damage_amount: '' })
+      setCaseForm({ title: '', case_no: '', vehicle_plate: '', description: '', status: 'open', client_id: '', car_dealer_id: '', damage_amount: '', court_name: '' })
       setSelectedClient(null)
+      setSelectedCarDealer(null)
       setEditingCase(null)
       setCaseDialogOpen(false)
       loadData()
-    } catch (error: unknown) {
-      const msg = (error as { message?: unknown })?.message
-      toast.error(typeof msg === 'string' ? msg : 'Bir hata oluştu')
+    } catch (error: any) {
+      toast.error(error.message)
     }
   }
 
@@ -249,9 +318,8 @@ export default function DosyalarPage() {
       
       toast.success('Dosya silindi')
       loadData()
-    } catch (error: unknown) {
-      const msg = (error as { message?: unknown })?.message
-      toast.error(typeof msg === 'string' ? msg : 'Bir hata oluştu')
+    } catch (error: any) {
+      toast.error(error.message)
     }
   }
 
@@ -277,9 +345,22 @@ export default function DosyalarPage() {
     }
   }
 
+  const getCarDealerStats = (carDealerId: string) => {
+    const dealerCases = cases.filter(c => c.car_dealer_id === carDealerId)
+    const monthlyStats: Record<string, number> = {}
+    
+    dealerCases.forEach(c => {
+      const month = new Date(c.created_at).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long' })
+      monthlyStats[month] = (monthlyStats[month] || 0) + 1
+    })
+    
+    return monthlyStats
+  }
+
   const filteredCases = cases.filter(caseItem => {
     const matchesSearch = caseItem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          caseItem.case_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         caseItem.vehicle_plate?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          caseItem.client?.full_name.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === 'all' || caseItem.status === statusFilter
     return matchesSearch && matchesStatus
@@ -297,6 +378,15 @@ export default function DosyalarPage() {
           <p className="text-gray-600">Müvekkil ve dava dosyalarını yönetin</p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => setCarDealerStatsDialogOpen(true)}
+            className="cursor-pointer"
+          >
+            <Car className="h-4 w-4 mr-2" />
+            Kaportacılar
+          </Button>
+          
           <Dialog open={clientDialogOpen} onOpenChange={setClientDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline">
@@ -383,8 +473,9 @@ export default function DosyalarPage() {
             setCaseDialogOpen(open)
             if (!open) {
               setEditingCase(null)
-              setCaseForm({ title: '', case_no: '', description: '', status: 'open', client_id: '', damage_amount: '' })
+              setCaseForm({ title: '', case_no: '', description: '', status: 'open', client_id: '', car_dealer_id: '', damage_amount: '', court_name: '' })
               setSelectedClient(null)
+              setSelectedCarDealer(null)
             }
           }}>
             <DialogTrigger asChild>
@@ -434,6 +525,19 @@ export default function DosyalarPage() {
                       placeholder="Dosya numarası (opsiyonel)"
                     />
                   </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="vehicle_plate" className="text-sm font-medium text-gray-700">
+                    Araç Plakası
+                  </Label>
+                  <Input
+                    id="vehicle_plate"
+                    value={caseForm.vehicle_plate}
+                    onChange={(e) => setCaseForm({...caseForm, vehicle_plate: e.target.value.toUpperCase()})}
+                    className="h-11"
+                    placeholder="Örn: 35 ABC 123"
+                  />
+                </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="damage_amount" className="text-sm font-medium text-gray-700">
@@ -477,6 +581,51 @@ export default function DosyalarPage() {
                   </div>
                   <p className="text-xs text-gray-500">Dosyayı hangi müvekkile bağlayacağınızı seçin</p>
                 </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="car_dealer_id" className="text-sm font-medium text-gray-700">
+                    Kaportacı
+                  </Label>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Input
+                        value={selectedCarDealer?.name || ''}
+                        placeholder="Kaportacı seçin (opsiyonel)"
+                        readOnly
+                        className="h-11"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        // Kaportacı seçim dialog'u açılacak
+                        setCarDealerDialogOpen(true)
+                      }}
+                      className="h-11 px-4 cursor-pointer"
+                    >
+                      Seç
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500">Dosyayı hangi kaportacıdan aldığınızı seçin</p>
+                </div>
+                
+                {caseForm.title === 'Mahrumiyet İcra Dosyası' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="court_name" className="text-sm font-medium text-gray-700">
+                      Asliye Hukuk Mahkemesi *
+                    </Label>
+                    <Input
+                      id="court_name"
+                      value={caseForm.court_name}
+                      onChange={(e) => setCaseForm({...caseForm, court_name: e.target.value})}
+                      required={caseForm.title === 'Mahrumiyet İcra Dosyası'}
+                      className="h-11"
+                      placeholder="Örn: İstanbul 1. Asliye Hukuk Mahkemesi"
+                    />
+                    <p className="text-xs text-gray-500">Mahrumiyet İcra Dosyası için mahkeme adı zorunludur</p>
+                  </div>
+                )}
                 
                 <div className="space-y-2">
                   <Label htmlFor="description" className="text-sm font-medium text-gray-700">
@@ -645,10 +794,11 @@ export default function DosyalarPage() {
                 <TableRow>
                   <TableHead>Dosya Başlığı</TableHead>
                   <TableHead>Dosya No</TableHead>
+                  <TableHead>Araç Plakası</TableHead>
                   <TableHead>Müvekkil</TableHead>
                   <TableHead>Hasar Bedeli</TableHead>
+                  <TableHead>Mahkeme</TableHead>
                   <TableHead>Durum</TableHead>
-                  <TableHead>Tahkime Kalan Süre</TableHead>
                   <TableHead>Tarih</TableHead>
                   <TableHead>İşlemler</TableHead>
                 </TableRow>
@@ -658,11 +808,21 @@ export default function DosyalarPage() {
                   <TableRow key={caseItem.id}>
                     <TableCell className="font-medium">{caseItem.title}</TableCell>
                     <TableCell>{caseItem.case_no || '-'}</TableCell>
+                    <TableCell>{caseItem.vehicle_plate || '-'}</TableCell>
                     <TableCell>{caseItem.client?.full_name || '-'}</TableCell>
                     <TableCell>
                       {caseItem.damage_amount ? (
                         <span className="font-medium text-green-600">
                           {caseItem.damage_amount.toLocaleString('tr-TR')} TL
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {caseItem.court_name ? (
+                        <span className="text-sm font-medium text-blue-600">
+                          {caseItem.court_name}
                         </span>
                       ) : (
                         <span className="text-gray-400">-</span>
@@ -678,16 +838,7 @@ export default function DosyalarPage() {
                         {caseItem.status === 'open' ? 'Açık' : 'Kapalı'}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      {caseItem.countdown_expires_at ? (
-                        <CountdownTimer 
-                          expiresAt={caseItem.countdown_expires_at} 
-                          isActive={caseItem.is_countdown_active || false} 
-                        />
-                      ) : (
-                        <Badge variant="secondary">-</Badge>
-                      )}
-                    </TableCell>
+                    
                     <TableCell>
                       {new Date(caseItem.created_at).toLocaleDateString('tr-TR')}
                     </TableCell>
@@ -722,6 +873,315 @@ export default function DosyalarPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Kaportacı İstatistikleri Modal */}
+      <Dialog open={carDealerStatsDialogOpen} onOpenChange={setCarDealerStatsDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <div className="flex justify-between items-center pr-8">
+              <DialogTitle className="text-xl font-semibold">Kaportacı İstatistikleri</DialogTitle>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setCarDealerStatsDialogOpen(false)
+                  setCarDealerAddDialogOpen(true)
+                }}
+                className="cursor-pointer"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Yeni Kaportacı Ekle
+              </Button>
+            </div>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-hidden">
+            
+            {carDealers.length > 0 ? (
+              <div className="space-y-4 overflow-y-auto max-h-[60vh]">
+                {carDealers.map((dealer) => {
+                  const stats = getCarDealerStats(dealer.id)
+                  const totalCases = Object.values(stats).reduce((sum, count) => sum + count, 0)
+                  
+                  return (
+                    <div key={dealer.id} className="bg-white border rounded-lg p-4 hover:shadow-sm transition-shadow">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-semibold text-lg text-gray-900 mb-1">{dealer.name}</h3>
+                          <div className="space-y-1">
+                            {dealer.phone && (
+                              <p className="text-sm text-gray-600">
+                                <span className="font-medium">Tel:</span> {dealer.phone}
+                              </p>
+                            )}
+                            {dealer.email && (
+                              <p className="text-sm text-gray-600">
+                                <span className="font-medium">E-posta:</span> {dealer.email}
+                              </p>
+                            )}
+                            {dealer.address && (
+                              <p className="text-sm text-gray-600">
+                                <span className="font-medium">Adres:</span> {dealer.address}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <Badge variant="outline" className="mb-2">
+                            {totalCases} toplam dosya
+                          </Badge>
+                          <p className="text-xs text-gray-500 mb-2">
+                            {new Date(dealer.created_at).toLocaleDateString('tr-TR')}
+                          </p>
+                          <div className="flex gap-1">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => {
+                                setCarDealerStatsDialogOpen(false)
+                                handleEditCarDealer(dealer)
+                              }}
+                              className="h-7 px-2 text-xs cursor-pointer"
+                              title="Düzenle"
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              onClick={() => handleDeleteCarDealer(dealer.id)}
+                              className="h-7 px-2 text-xs text-red-600 hover:text-red-700 cursor-pointer"
+                              title="Sil"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {Object.keys(stats).length > 0 ? (
+                        <div>
+                          <h4 className="font-medium text-gray-700 mb-2">Ay Bazında Dosya Sayıları:</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                            {Object.entries(stats).map(([month, count]) => (
+                              <div key={month} className="bg-gray-50 rounded-lg p-3">
+                                <p className="text-sm font-medium text-gray-900">{month}</p>
+                                <p className="text-lg font-bold text-blue-600">{count} dosya</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-4">
+                          <p className="text-gray-500">Henüz bu kaportacıdan dosya alınmamış</p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center py-12">
+                  <Car className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 text-lg">Henüz kaportacı bulunmuyor</p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setCarDealerStatsDialogOpen(false)
+                      setCarDealerAddDialogOpen(true)
+                    }}
+                    className="mt-4 cursor-pointer"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    İlk Kaportacıyı Ekle
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Kaportacı Ekleme/Seçim Modal */}
+      <Dialog open={carDealerDialogOpen} onOpenChange={setCarDealerDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">Kaportacı Seç</DialogTitle>
+            <DialogDescription className="text-base">
+              Bu dosyayı hangi kaportacıdan aldığınızı seçin
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div className="flex justify-end">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setCarDealerDialogOpen(false)
+                  setCarDealerAddDialogOpen(true)
+                }}
+                className="cursor-pointer"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Yeni Kaportacı Ekle
+              </Button>
+            </div>
+            
+            <div className="max-h-96 overflow-y-auto space-y-3">
+              {carDealers.length > 0 ? (
+                carDealers.map((dealer) => (
+                  <div
+                    key={dealer.id}
+                    className={`p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md ${
+                      selectedCarDealer?.id === dealer.id 
+                        ? 'bg-blue-50 border-blue-300 shadow-md' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => {
+                      setSelectedCarDealer(dealer)
+                      setCaseForm({...caseForm, car_dealer_id: dealer.id})
+                      setCarDealerDialogOpen(false)
+                    }}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg text-gray-900 mb-1">
+                          {dealer.name}
+                        </h3>
+                        <div className="space-y-1">
+                          {dealer.phone && (
+                            <p className="text-sm text-gray-600">
+                              <span className="font-medium">Tel:</span> {dealer.phone}
+                            </p>
+                          )}
+                          {dealer.email && (
+                            <p className="text-sm text-gray-600">
+                              <span className="font-medium">E-posta:</span> {dealer.email}
+                            </p>
+                          )}
+                          {dealer.address && (
+                            <p className="text-sm text-gray-600">
+                              <span className="font-medium">Adres:</span> {dealer.address}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="ml-4 text-right">
+                        <Badge variant="outline" className="mb-2">
+                          {cases.filter(c => c.car_dealer_id === dealer.id).length} dosya
+                        </Badge>
+                        <p className="text-xs text-gray-500">
+                          {new Date(dealer.created_at).toLocaleDateString('tr-TR')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-gray-400 mb-4">
+                    <Car className="w-16 h-16 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Henüz kaportacı bulunmuyor</h3>
+                  <p className="text-gray-500 mb-4">Önce kaportacı eklemeniz gerekiyor</p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setCarDealerDialogOpen(false)
+                      setCarDealerAddDialogOpen(true)
+                    }}
+                    className="cursor-pointer"
+                  >
+                    Yeni Kaportacı Ekle
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Kaportacı Ekleme/Düzenleme Modal */}
+      <Dialog open={carDealerAddDialogOpen} onOpenChange={(open) => {
+        setCarDealerAddDialogOpen(open)
+        if (!open) {
+          setEditingCarDealer(null)
+          setCarDealerForm({ name: '', phone: '', email: '', address: '' })
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editingCarDealer ? 'Kaportacı Düzenle' : 'Yeni Kaportacı Ekle'}
+            </DialogTitle>
+            <DialogDescription>
+              {editingCarDealer ? 'Kaportacı bilgilerini güncelleyin' : 'Yeni kaportacı bilgilerini girin'}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={editingCarDealer ? handleUpdateCarDealer : handleCreateCarDealer} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+                Kaportacı Adı *
+              </Label>
+              <Input
+                id="name"
+                value={carDealerForm.name}
+                onChange={(e) => setCarDealerForm({...carDealerForm, name: e.target.value})}
+                required
+                className="h-11"
+                placeholder="Kaportacı adı"
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                  Telefon
+                </Label>
+                <Input
+                  id="phone"
+                  value={carDealerForm.phone}
+                  onChange={(e) => setCarDealerForm({...carDealerForm, phone: e.target.value})}
+                  className="h-11"
+                  placeholder="0555 123 45 67"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                  E-posta
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={carDealerForm.email}
+                  onChange={(e) => setCarDealerForm({...carDealerForm, email: e.target.value})}
+                  className="h-11"
+                  placeholder="ornek@email.com"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="address" className="text-sm font-medium text-gray-700">
+                Adres
+              </Label>
+              <Textarea
+                id="address"
+                value={carDealerForm.address}
+                onChange={(e) => setCarDealerForm({...carDealerForm, address: e.target.value})}
+                placeholder="Kaportacı adresi"
+                className="min-h-[100px]"
+              />
+            </div>
+            
+            <div className="pt-4">
+              <Button type="submit" className="w-full h-11 text-base font-medium">
+                {editingCarDealer ? 'Kaportacı Bilgilerini Güncelle' : 'Yeni Kaportacı Ekle'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

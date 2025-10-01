@@ -34,3 +34,5 @@ CREATE INDEX IF NOT EXISTS idx_expenses_case_id ON public.expenses(case_id);
 CREATE INDEX IF NOT EXISTS idx_expenses_created_by ON public.expenses(created_by);
 CREATE INDEX IF NOT EXISTS idx_expenses_expense_date ON public.expenses(expense_date);
 CREATE INDEX IF NOT EXISTS idx_expenses_category ON public.expenses(category);
+
+

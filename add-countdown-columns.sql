@@ -7,3 +7,4 @@ ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS is_countdown_active boolean DE
 COMMENT ON COLUMN public.cases.insurance_application_date IS 'Sigorta başvurusu tarihi';
 COMMENT ON COLUMN public.cases.countdown_expires_at IS '15 günlük sürenin bittiği tarih';
 COMMENT ON COLUMN public.cases.is_countdown_active IS 'Geri sayımın aktif olup olmadığı';
+
