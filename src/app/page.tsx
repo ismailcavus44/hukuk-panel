@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { supabaseBrowser } from "@/lib/supabase/client"
-import { FileText, Calculator, Users, TrendingUp, UserPlus } from 'lucide-react'
+import { FileText, Calculator, Users, TrendingUp } from 'lucide-react'
 
 export default function Dashboard() {
   const [stats, setStats] = useState({

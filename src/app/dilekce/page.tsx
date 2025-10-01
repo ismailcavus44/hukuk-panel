@@ -643,9 +643,9 @@ export default function DilekcePage() {
 
                   <div className="space-y-3 mb-8 text-sm">
                     <p className="font-bold">AÇIKLAMALAR :</p>
-                    <p>{insuranceForm.accident_date || '...'} tarihinde müvekkil {insuranceForm.client_name || '...'} adına kayıtlı {insuranceForm.client_plate || '...'} plaka sayılı aracına, şirketinize {insuranceForm.policy_no || '...'} no'lu poliçe ile ZMMS sigortalı bulunan {insuranceForm.opponent_plate || '...'} plaka sayılı aracın çarpması neticesi maddi hasarlı trafik kazası meydana gelmiştir.</p>
+                    <p>{insuranceForm.accident_date || '...'} tarihinde müvekkil {insuranceForm.client_name || '...'} adına kayıtlı {insuranceForm.client_plate || '...'} plaka sayılı aracına, şirketinize {insuranceForm.policy_no || '...'} no’lu poliçe ile ZMMS sigortalı bulunan {insuranceForm.opponent_plate || '...'} plaka sayılı aracın çarpması neticesi maddi hasarlı trafik kazası meydana gelmiştir.</p>
                     <p>Meydana gelen kaza {insuranceForm.opponent_plate || '...'} plaka sayılı aracın asli ve tam kusuru ile meydana gelmiş, müvekkile ait araç hasar görmüştür. İşbu nedenle;</p>
-                    <p>Fazlaya ilişkin haklarımız saklı kalmak kaydıyla, ekte sunulan belgelerden faydalanılarak; Yaşanan trafik kazası neticesi müvekkilin {insuranceForm.client_plate || '...'} plaka sayılı aracında meydana gelen ARAÇ DEĞER KAYBI BEDELİNİN Zorunlu Sorumluluk Sigortasından kaynaklı {formatAmountTR(insuranceForm.amount)} TL teminat limiti ile sınırlı olmak kaydıyla, işbu başvurunun şirketinize ulaştığı tarihten itibaren 15 gün içinde mağdur vekili {form.avukat || 'Av. Samet AYGÜN'}'e ait Vakıf Bank TR66 0001 5001 5800 7300 1461 98 IBAN no'lu hesaba yatırılması, aksi taktirde aleyhinize yargı yoluna başvurulacağı, yargılama masrafı, ticari temerrüt faizi ve avukatlık ücretinden sorumlu tutulacağınız hususlarını ihtaren bildiririz. {form.tarih}</p>
+                    <p>Fazlaya ilişkin haklarımız saklı kalmak kaydıyla, ekte sunulan belgelerden faydalanılarak; Yaşanan trafik kazası neticesi müvekkilin {insuranceForm.client_plate || '...'} plaka sayılı aracında meydana gelen ARAÇ DEĞER KAYBI BEDELİNİN Zorunlu Sorumluluk Sigortasından kaynaklı {formatAmountTR(insuranceForm.amount)} TL teminat limiti ile sınırlı olmak kaydıyla, işbu başvurunun şirketinize ulaştığı tarihten itibaren 15 gün içinde mağdur vekili {form.avukat || 'Av. Samet AYGÜN'}’e ait Vakıf Bank TR66 0001 5001 5800 7300 1461 98 IBAN no’lu hesaba yatırılması, aksi taktirde aleyhinize yargı yoluna başvurulacağı, yargılama masrafı, ticari temerrüt faizi ve avukatlık ücretinden sorumlu tutulacağınız hususlarını ihtaren bildiririz. {form.tarih}</p>
                     <p className="text-xs mt-2">(Aşağıda liste halinde, Zorunlu Mali Mesuliyet Sigortası Genel Şartları Ekinde belirtilen belgeler, huzurdaki dilekçe ekinde şirketinize sunulmaktadır.)</p>
                   </div>
 
@@ -671,7 +671,7 @@ export default function DilekcePage() {
                 <>
                   <div className="text-center mb-8">
                     <h2 className="text-2xl font-bold mb-4">{form.dilekceTuru || 'Dilekçe Türü'}</h2>
-                    <h3 className="text-xl font-bold">{form.mahkeme || 'Mahkeme'} MAHKEMESİ'NE</h3>
+                    <h3 className="text-xl font-bold">{form.mahkeme || 'Mahkeme'} MAHKEMESİ’NE</h3>
                   </div>
                   <div className="space-y-4 mb-8">
                     <p><strong>DAVA NO:</strong> {form.davaNo || 'Dava No'}</p>

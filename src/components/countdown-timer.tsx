@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { Badge } from '@/components/ui/badge'
-import { Clock, CheckCircle, AlertCircle } from 'lucide-react'
+import { Clock, CheckCircle } from 'lucide-react'
 
 interface CountdownTimerProps {
   expiresAt: string
