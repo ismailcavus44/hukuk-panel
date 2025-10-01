@@ -118,7 +118,7 @@ export default function Dashboard() {
         <CardContent>
           {recentCases.length > 0 ? (
             <div className="space-y-4">
-              {recentCases.map((caseItem: any) => (
+              {recentCases.map((caseItem) => (
                 <div key={caseItem.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
                     <h3 className="font-medium text-gray-900">{caseItem.title}</h3>

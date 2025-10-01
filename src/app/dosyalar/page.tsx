@@ -115,7 +115,7 @@ export default function DosyalarPage() {
       setCases((casesResult.data as unknown as Case[]) || [])
       setClients((clientsResult.data as unknown as Client[]) || [])
       setCarDealers((carDealersResult.data as unknown as CarDealer[]) || [])
-    } catch (_error) {
+    } catch {
       console.error('Veri yüklenirken hata')
       toast.error('Veriler yüklenirken hata oluştu')
     } finally {
@@ -214,7 +214,7 @@ export default function DosyalarPage() {
       
       toast.success('Kaportacı silindi')
       loadData()
-    } catch (_error) {
+    } catch {
       toast.error('Hata')
     }
   }
@@ -229,7 +229,7 @@ export default function DosyalarPage() {
         return
       }
 
-      let caseData: any = {
+      const newCase = {
         ...caseForm,
         damage_amount: caseForm.damage_amount ? parseFloat(caseForm.damage_amount) : null,
         vehicle_plate: caseForm.vehicle_plate ? caseForm.vehicle_plate.toUpperCase() : null,
@@ -238,7 +238,7 @@ export default function DosyalarPage() {
         created_by: user.id
       }
 
-      const { error } = await sb.from('cases').insert(caseData)
+      const { error } = await sb.from('cases').insert(newCase)
       if (error) throw error
       
       toast.success('Dosya başarıyla oluşturuldu')
@@ -248,7 +248,7 @@ export default function DosyalarPage() {
       setSelectedCarDealer(null)
       setCaseDialogOpen(false)
       loadData()
-    } catch (_error) {
+    } catch {
       toast.error('Hata')
     }
   }
@@ -341,8 +341,8 @@ export default function DosyalarPage() {
       
       toast.success(`Dosya ${statusText} olarak işaretlendi`)
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch {
+      toast.error('Hata')
     }
   }
 

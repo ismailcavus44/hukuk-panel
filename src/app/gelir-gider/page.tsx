@@ -45,7 +45,6 @@ export default function GelirGiderPage() {
   const [categoryFilter, setCategoryFilter] = useState('all')
 
   const [transactionDialogOpen, setTransactionDialogOpen] = useState(false)
-  const [editingTransaction, setEditingTransaction] = useState<IncomeExpense | null>(null)
   const [caseTransactionDialogOpen, setCaseTransactionDialogOpen] = useState(false)
   const [selectedCaseForTransaction, setSelectedCaseForTransaction] = useState<{case: Case, transactions: IncomeExpense[]} | null>(null)
 
@@ -68,6 +67,7 @@ export default function GelirGiderPage() {
 
   useEffect(() => {
     void loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const normalizeTr = (value: string): string => {
@@ -94,7 +94,7 @@ export default function GelirGiderPage() {
           .select(`id, case_id, type, category, amount, description, transaction_date, created_at, case:cases(id, title, case_no, client_id, court_name, client:clients(id, full_name))`)
           .order('transaction_date', { ascending: false })
       ])
-  const fetchedCases = (casesResult.data || []) as unknown as Array<Record<string, unknown>>
+      const fetchedCases = (casesResult.data || []) as Array<Record<string, unknown>>
       setCases(
         fetchedCases.map((r) => ({
           id: String(r.id),
@@ -102,18 +102,26 @@ export default function GelirGiderPage() {
           case_no: r.case_no ? String(r.case_no) : undefined,
           client_id: r.client_id ? String(r.client_id) : undefined,
           court_name: r.court_name ? String(r.court_name) : undefined,
-          client: Array.isArray(r.client) ? (r.client[0] || undefined) : (r.client as any),
+          client: Array.isArray(r.client)
+            ? (r.client[0] as { id: string; full_name: string } | undefined)
+            : (r.client as { id: string; full_name: string } | undefined),
         })) as Case[]
       )
 
-      const fetchedTransactions = (transactionsResult.data || []) as unknown as Array<Record<string, unknown>>
+      const fetchedTransactions = (transactionsResult.data || []) as Array<Record<string, any>>
       setTransactions(
         fetchedTransactions.map((r) => {
-          const c = Array.isArray(r.case) ? (r.case[0] || undefined) : r.case
+          const c = Array.isArray(r.case) ? (r.case[0] as any | undefined) : (r.case as any | undefined)
           const normalizedCase = c
             ? {
-                ...(c as any),
-                client: Array.isArray((c as any).client) ? ((c as any).client[0] || undefined) : (c as any).client,
+                id: String(c.id),
+                title: String(c.title),
+                case_no: c.case_no ? String(c.case_no) : undefined,
+                client_id: c.client_id ? String(c.client_id) : undefined,
+                court_name: c.court_name ? String(c.court_name) : undefined,
+                client: Array.isArray(c.client)
+                  ? (c.client[0] as { id: string; full_name: string } | undefined)
+                  : (c.client as { id: string; full_name: string } | undefined),
               }
             : undefined
 
@@ -214,8 +222,8 @@ export default function GelirGiderPage() {
       setTransactionDialogOpen(false)
       setTransactionForm({ case_id: '', type: 'income', category: '', amount: '', description: '', transaction_date: new Date().toISOString().split('T')[0] })
       void loadData()
-    } catch (err: any) {
-      toast.error(err.message || 'İşlem eklenemedi')
+    } catch {
+      toast.error('İşlem eklenemedi')
     }
   }
 
@@ -234,7 +242,6 @@ export default function GelirGiderPage() {
           <Dialog open={transactionDialogOpen} onOpenChange={(open) => {
             setTransactionDialogOpen(open)
             if (!open) {
-              setEditingTransaction(null)
               setTransactionForm({ case_id: '', type: 'income', category: '', amount: '', description: '', transaction_date: new Date().toISOString().split('T')[0] })
             }
           }}>
@@ -320,9 +327,45 @@ export default function GelirGiderPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card><CardContent className="p-6"><div className="flex items-center"><div className="p-3 rounded-lg bg-green-100"><TrendingUp className="h-6 w-6 text-green-600" /></div><div className="ml-4"><p className="text-sm font-medium text-gray-600">Toplam Gelir</p><p className="text-2xl font-bold text-green-600">{totalIncome.toLocaleString('tr-TR')} TL</p></div></div></CardContent></Card>
-        <Card><CardContent className="p-6"><div className="flex items-center"><div className="p-3 rounded-lg bg-red-100"><TrendingDown className="h-6 w-6 text-red-600" /></div><div className="ml-4"><p className="text-sm font-medium text-gray-600">Toplam Gider</p><p className="text-2xl font-bold text-red-600">{totalExpense.toLocaleString('tr-TR')} TL</p></div></div></CardContent></Card>
-        <Card><CardContent className="p-6"><div className="flex items-center"><div className={`p-3 rounded-lg ${netAmount >= 0 ? 'bg-blue-100' : 'bg-orange-100'}`}><DollarSign className={`h-6 w-6 ${netAmount >= 0 ? 'text-blue-600' : 'text-orange-600'}`} /></div><div className="ml-4"><p className="text-sm font-medium text-gray-600">Net Tutar</p><p className={`text-2xl font-bold ${netAmount >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>{netAmount.toLocaleString('tr-TR')} TL</p></div></div></CardContent></Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className="p-3 rounded-lg bg-green-100">
+                <TrendingUp className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Toplam Gelir</p>
+                <p className="text-2xl font-bold text-green-600">{totalIncome.toLocaleString('tr-TR')} TL</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className="p-3 rounded-lg bg-red-100">
+                <TrendingDown className="h-6 w-6 text-red-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Toplam Gider</p>
+                <p className="text-2xl font-bold text-red-600">{totalExpense.toLocaleString('tr-TR')} TL</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className={`p-3 rounded-lg ${netAmount >= 0 ? 'bg-blue-100' : 'bg-orange-100'}`}>
+                <DollarSign className={`h-6 w-6 ${netAmount >= 0 ? 'text-blue-600' : 'text-orange-600'}`} />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Net Tutar</p>
+                <p className={`text-2xl font-bold ${netAmount >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>{netAmount.toLocaleString('tr-TR')} TL</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
@@ -476,35 +519,35 @@ export default function GelirGiderPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg flex-shrink-0">
                 <div className="text-center">
                   <p className="text-xs text-gray-500 mb-1">Dosya No</p>
-                  <p className="font-semibold text-sm">{selectedCaseForTransaction.case.case_no || '-'}</p>
+                  <p className="font-semibold text-sm">{selectedCaseForTransaction?.case.case_no || '-'}</p>
                 </div>
-                {selectedCaseForTransaction.case.title === 'Mahrumiyet İcra Dosyası' && selectedCaseForTransaction.case.court_name && (
+                {selectedCaseForTransaction?.case.title === 'Mahrumiyet İcra Dosyası' && selectedCaseForTransaction?.case.court_name && (
                   <div className="text-center">
                     <p className="text-xs text-gray-500 mb-1">Mahkeme</p>
-                    <p className="font-semibold text-sm text-blue-600">{selectedCaseForTransaction.case.court_name}</p>
+                    <p className="font-semibold text-sm text-blue-600">{selectedCaseForTransaction?.case.court_name}</p>
                   </div>
                 )}
                 <div className="text-center">
                   <p className="text-xs text-gray-500 mb-1">İşlem Sayısı</p>
-                  <p className="font-semibold text-sm">{selectedCaseForTransaction.transactions.length}</p>
+                  <p className="font-semibold text-sm">{selectedCaseForTransaction?.transactions.length ?? 0}</p>
                 </div>
                 <div className="text-center">
                   <p className="text-xs text-gray-500 mb-1">Toplam Gelir</p>
                   <p className="font-semibold text-sm text-green-600">
-                    {selectedCaseForTransaction.transactions.filter(t => t.type === 'income').reduce((s,t)=>s+t.amount,0).toLocaleString('tr-TR')} TL
+                    {(selectedCaseForTransaction?.transactions || []).filter(t => t.type === 'income').reduce((s,t)=>s+t.amount,0).toLocaleString('tr-TR')} TL
                   </p>
                 </div>
                 <div className="text-center">
                   <p className="text-xs text-gray-500 mb-1">Toplam Gider</p>
                   <p className="font-semibold text-sm text-red-600">
-                    {selectedCaseForTransaction.transactions.filter(t => t.type === 'expense').reduce((s,t)=>s+t.amount,0).toLocaleString('tr-TR')} TL
+                    {(selectedCaseForTransaction?.transactions || []).filter(t => t.type === 'expense').reduce((s,t)=>s+t.amount,0).toLocaleString('tr-TR')} TL
                   </p>
                 </div>
               </div>
               <div className="flex-1 overflow-hidden border rounded-lg">
                 <div className="h-full overflow-y-auto">
                   <div className="space-y-3 p-4">
-                    {selectedCaseForTransaction.transactions.map((transaction) => (
+                    {(selectedCaseForTransaction?.transactions || []).map((transaction) => (
                       <div key={transaction.id} className="bg-white border rounded-lg p-4 hover:shadow-sm transition-shadow">
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
