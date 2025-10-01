@@ -11,7 +11,7 @@ export default function Dashboard() {
     totalCalculations: 0,
     totalDocuments: 0
   })
-  const [recentCases, setRecentCases] = useState([])
+  const [recentCases, setRecentCases] = useState<Array<{ id: string; title: string; case_no?: string | null; status?: string | null; created_at: string }>>([])
   const sb = supabaseBrowser()
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function Dashboard() {
         .order('created_at', { ascending: false })
         .limit(5)
 
-      setRecentCases(cases || [])
+      setRecentCases((cases as Array<{ id: string; title: string; case_no?: string | null; status?: string | null; created_at: string }>) || [])
     } catch (error) {
       console.error('Dashboard verileri yüklenirken hata:', error)
     }

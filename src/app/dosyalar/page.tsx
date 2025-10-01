@@ -112,9 +112,9 @@ export default function DosyalarPage() {
         sb.from('car_dealers').select('*').order('name')
       ])
 
-      setCases((casesResult.data as any[]) || [])
-      setClients((clientsResult.data as any[]) || [])
-      setCarDealers((carDealersResult.data as any[]) || [])
+      setCases((casesResult.data as unknown as Case[]) || [])
+      setClients((clientsResult.data as unknown as Client[]) || [])
+      setCarDealers((carDealersResult.data as unknown as CarDealer[]) || [])
     } catch (_error) {
       console.error('Veri yüklenirken hata')
       toast.error('Veriler yüklenirken hata oluştu')
@@ -143,7 +143,7 @@ export default function DosyalarPage() {
       setClientForm({ full_name: '', tc_no: '', phone: '', email: '' })
       setClientDialogOpen(false)
       loadData()
-    } catch (_error) {
+    } catch {
       toast.error('Hata')
     }
   }
@@ -167,7 +167,7 @@ export default function DosyalarPage() {
       setCarDealerForm({ name: '', phone: '', email: '', address: '' })
       setCarDealerAddDialogOpen(false)
       loadData()
-    } catch (_error) {
+    } catch {
       toast.error('Hata')
     }
   }
@@ -200,7 +200,7 @@ export default function DosyalarPage() {
       setEditingCarDealer(null)
       setCarDealerAddDialogOpen(false)
       loadData()
-    } catch (_error) {
+    } catch {
       toast.error('Hata')
     }
   }
@@ -305,8 +305,8 @@ export default function DosyalarPage() {
       setEditingCase(null)
       setCaseDialogOpen(false)
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch {
+      toast.error('Hata')
     }
   }
 
@@ -319,8 +319,8 @@ export default function DosyalarPage() {
       
       toast.success('Dosya silindi')
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch {
+      toast.error('Hata')
     }
   }
 

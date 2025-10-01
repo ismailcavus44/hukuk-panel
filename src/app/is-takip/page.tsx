@@ -287,8 +287,8 @@ export default function IsTakipPage() {
           if (error) throw error
           toast.success('Görev taşındı')
           await loadData()
-        } catch (error: any) {
-          toast.error('Görev taşınamadı')
+    } catch {
+      toast.error('Görev taşınamadı')
           await loadData()
         }
       }
@@ -312,7 +312,7 @@ export default function IsTakipPage() {
         if (error) throw error
         toast.success('Görev taşındı')
         await loadData()
-      } catch (error: any) {
+      } catch {
         toast.error('Görev taşınamadı')
         await loadData()
       }
@@ -346,7 +346,7 @@ export default function IsTakipPage() {
               sb.from('tasks').update({ position: upd.position }).eq('id', upd.id)
             )
           )
-        } catch (error: any) {
+        } catch {
           toast.error('Sıralama güncellenemedi')
           await loadData()
         }

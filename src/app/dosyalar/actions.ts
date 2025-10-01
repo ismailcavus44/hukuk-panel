@@ -1,6 +1,5 @@
 'use server'
 import { supabaseServer } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 
 export async function createClientAction(data: {full_name: string; phone?: string; email?: string}) {
   const sb = supabaseServer()
