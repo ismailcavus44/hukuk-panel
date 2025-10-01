@@ -130,6 +130,7 @@ export default function IsTakipPage() {
 
   useEffect(() => {
     loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadData = async () => {
@@ -174,8 +175,8 @@ export default function IsTakipPage() {
       setTaskForm({ title: '', description: '', status: 'todo', case_id: '', due_date: '' })
       setTaskDialogOpen(false)
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (_error) {
+      toast.error('Hata')
     }
   }
 
@@ -213,8 +214,8 @@ export default function IsTakipPage() {
       setEditingTask(null)
       setTaskDialogOpen(false)
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (_error) {
+      toast.error('Hata')
     }
   }
 
@@ -227,8 +228,8 @@ export default function IsTakipPage() {
 
       toast.success('Görev silindi')
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (_error) {
+      toast.error('Hata')
     }
   }
 

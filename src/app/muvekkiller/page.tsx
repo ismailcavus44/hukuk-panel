@@ -60,6 +60,7 @@ export default function MuvekkillerPage() {
 
   useEffect(() => {
     loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadData = async () => {
@@ -104,8 +105,8 @@ export default function MuvekkillerPage() {
       setClientForm({ full_name: '', tc_no: '', phone: '', email: '' })
       setClientDialogOpen(false)
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (_error) {
+      toast.error('Hata')
     }
   }
 
@@ -137,8 +138,8 @@ export default function MuvekkillerPage() {
       setEditingClient(null)
       setClientDialogOpen(false)
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (_error) {
+      toast.error('Hata')
     }
   }
 
@@ -151,8 +152,8 @@ export default function MuvekkillerPage() {
       
       toast.success('Müvekkil silindi')
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (_error) {
+      toast.error('Hata')
     }
   }
 

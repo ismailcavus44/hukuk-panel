@@ -94,44 +94,44 @@ export default function GelirGiderPage() {
           .select(`id, case_id, type, category, amount, description, transaction_date, created_at, case:cases(id, title, case_no, client_id, court_name, client:clients(id, full_name))`)
           .order('transaction_date', { ascending: false })
       ])
-      const fetchedCases = (casesResult.data || []) as any[]
+  const fetchedCases = (casesResult.data || []) as unknown as Array<Record<string, unknown>>
       setCases(
         fetchedCases.map((r) => ({
-          id: r.id,
-          title: r.title,
-          case_no: r.case_no ?? undefined,
-          client_id: r.client_id ?? undefined,
-          court_name: r.court_name ?? undefined,
-          client: Array.isArray(r.client) ? (r.client[0] || undefined) : r.client,
-        }))
+          id: String(r.id),
+          title: String(r.title),
+          case_no: r.case_no ? String(r.case_no) : undefined,
+          client_id: r.client_id ? String(r.client_id) : undefined,
+          court_name: r.court_name ? String(r.court_name) : undefined,
+          client: Array.isArray(r.client) ? (r.client[0] || undefined) : (r.client as any),
+        })) as Case[]
       )
 
-      const fetchedTransactions = (transactionsResult.data || []) as any[]
+      const fetchedTransactions = (transactionsResult.data || []) as unknown as Array<Record<string, unknown>>
       setTransactions(
         fetchedTransactions.map((r) => {
           const c = Array.isArray(r.case) ? (r.case[0] || undefined) : r.case
           const normalizedCase = c
             ? {
-                ...c,
-                client: Array.isArray(c.client) ? (c.client[0] || undefined) : c.client,
+                ...(c as any),
+                client: Array.isArray((c as any).client) ? ((c as any).client[0] || undefined) : (c as any).client,
               }
             : undefined
 
           return {
-            id: r.id,
-            case_id: r.case_id,
-            type: r.type,
-            category: r.category,
+            id: String(r.id),
+            case_id: String(r.case_id),
+            type: r.type as 'income' | 'expense',
+            category: String(r.category),
             amount: Number(r.amount),
-            description: r.description,
-            transaction_date: r.transaction_date,
-            created_at: r.created_at,
+            description: String(r.description ?? ''),
+            transaction_date: String(r.transaction_date),
+            created_at: String(r.created_at),
             case: normalizedCase,
-          }
-        })
+          } as IncomeExpense
+        }) as IncomeExpense[]
       )
-    } catch (err) {
-      console.error(err)
+    } catch (_err) {
+      console.error(_err)
       toast.error('Veriler yüklenirken hata oluştu')
     } finally {
       setLoading(false)

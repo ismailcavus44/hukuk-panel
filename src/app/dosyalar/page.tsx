@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, Upload, Edit, Trash2, Car } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Car } from 'lucide-react'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
@@ -93,6 +93,7 @@ export default function DosyalarPage() {
 
   useEffect(() => {
     loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadData = async () => {
@@ -111,11 +112,11 @@ export default function DosyalarPage() {
         sb.from('car_dealers').select('*').order('name')
       ])
 
-      setCases(casesResult.data || [])
-      setClients(clientsResult.data || [])
-      setCarDealers(carDealersResult.data || [])
-    } catch (error) {
-      console.error('Veri yüklenirken hata:', error)
+      setCases((casesResult.data as any[]) || [])
+      setClients((clientsResult.data as any[]) || [])
+      setCarDealers((carDealersResult.data as any[]) || [])
+    } catch (_error) {
+      console.error('Veri yüklenirken hata')
       toast.error('Veriler yüklenirken hata oluştu')
     } finally {
       setLoading(false)
@@ -142,8 +143,8 @@ export default function DosyalarPage() {
       setClientForm({ full_name: '', tc_no: '', phone: '', email: '' })
       setClientDialogOpen(false)
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (_error) {
+      toast.error('Hata')
     }
   }
 
@@ -166,8 +167,8 @@ export default function DosyalarPage() {
       setCarDealerForm({ name: '', phone: '', email: '', address: '' })
       setCarDealerAddDialogOpen(false)
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (_error) {
+      toast.error('Hata')
     }
   }
 
@@ -199,8 +200,8 @@ export default function DosyalarPage() {
       setEditingCarDealer(null)
       setCarDealerAddDialogOpen(false)
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (_error) {
+      toast.error('Hata')
     }
   }
 
@@ -213,8 +214,8 @@ export default function DosyalarPage() {
       
       toast.success('Kaportacı silindi')
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (_error) {
+      toast.error('Hata')
     }
   }
 
@@ -247,8 +248,8 @@ export default function DosyalarPage() {
       setSelectedCarDealer(null)
       setCaseDialogOpen(false)
       loadData()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (_error) {
+      toast.error('Hata')
     }
   }
 

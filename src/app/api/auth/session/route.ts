@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ ok: true })
-  } catch (_e: unknown) {
+  } catch {
     return NextResponse.json({ error: 'bad request' }, { status: 400 })
   }
 }
