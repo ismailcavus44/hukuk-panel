@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
 
   // Temel içerik doğrulama: boyut ve mime/uzantı kısıtları
   const MAX_SIZE_BYTES = 25 * 1024 * 1024 // 25MB
-  if ((file as any)?.size && (file as any).size > MAX_SIZE_BYTES) {
+  const size = (file as File & { size?: number }).size
+  if (typeof size === 'number' && size > MAX_SIZE_BYTES) {
     return NextResponse.json({ error: 'file too large' }, { status: 413 })
   }
   const allowedMime = [

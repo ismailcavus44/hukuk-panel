@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { FileText, Download, Eye } from 'lucide-react'
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx'
+import { Document, Packer, Paragraph, TextRun, AlignmentType } from 'docx'
 import { saveAs } from 'file-saver'
 import { toast } from 'sonner'
 import { supabaseBrowser } from '@/lib/supabase/client'
@@ -637,7 +637,7 @@ export default function DilekcePage() {
                   <div className="space-y-2 mb-6">
                     <p className="font-bold">KONU :</p>
                     <p className="text-sm">
-                      Yaşanan trafik kazası neticesi müvekkilin {insuranceForm.client_plate || '...'} plaka sayılı aracında meydana gelen {formatAmountTR(insuranceForm.amount)} TL Araç Değer Kaybı Bedelinin (fazlaya ilişkin haklarımız saklı kalmak kaydıyla), Zorunlu Sorumluluk Sigortasından kaynaklı teminat limiti ile sınırlı olmak kaydıyla işbu başvurunun şirketinize ulaştığı tarihten itibaren 15 gün içinde mağdur vekili {form.avukat || 'Av. Samet AYGÜN'}'e ait Vakıf Bank TR66 0001 5001 5800 7300 1461 98 IBAN no'lu hesaba yatırılması talebidir.
+                      Yaşanan trafik kazası neticesi müvekkilin {insuranceForm.client_plate || '...'} plaka sayılı aracında meydana gelen {formatAmountTR(insuranceForm.amount)} TL Araç Değer Kaybı Bedelinin (fazlaya ilişkin haklarımız saklı kalmak kaydıyla), Zorunlu Sorumluluk Sigortasından kaynaklı teminat limiti ile sınırlı olmak kaydıyla işbu başvurunun şirketinize ulaştığı tarihten itibaren 15 gün içinde mağdur vekili {form.avukat || 'Av. Samet AYGÜN'}’e ait Vakıf Bank TR66 0001 5001 5800 7300 1461 98 IBAN no’lu hesaba yatırılması talebidir.
                     </p>
                   </div>
 

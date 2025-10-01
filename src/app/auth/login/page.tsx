@@ -47,7 +47,7 @@ export default function LoginPage() {
         toast.success('Giriş başarılı!')
         window.location.href = '/'
       }
-    } catch (error: any) {
+    } catch (_error: unknown) {
       toast.error('Bir hata oluştu')
     } finally {
       setLoading(false)
