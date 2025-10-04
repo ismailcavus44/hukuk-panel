@@ -709,7 +709,7 @@ export default function DosyalarPage() {
                           </div>
                           <div className="ml-4 text-right">
                             <Badge variant="outline" className="mb-2">
-                              {client.cases?.length || 0} dosya
+                              {cases.filter(c => c.client_id === client.id).length} dosya
                             </Badge>
                             <p className="text-xs text-gray-500">
                               {new Date(client.created_at).toLocaleDateString('tr-TR')}

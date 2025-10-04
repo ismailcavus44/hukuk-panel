@@ -70,7 +70,7 @@ export default function MuvekkillerPage() {
         .from('clients')
         .select(`
           id, full_name, tc_no, phone, email, created_at,
-          cases:cases(id, title, case_no, description, status, damage_amount, 
+          cases:cases(id, title, case_no, description, status, client_id, damage_amount, 
                       insurance_application_date, countdown_expires_at, is_countdown_active, created_at)
         `)
         .order('full_name')
