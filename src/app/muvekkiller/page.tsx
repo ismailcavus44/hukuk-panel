@@ -105,7 +105,7 @@ export default function MuvekkillerPage() {
       setClientForm({ full_name: '', tc_no: '', phone: '', email: '' })
       setClientDialogOpen(false)
       loadData()
-    } catch (_error) {
+    } catch {
       toast.error('Hata')
     }
   }
@@ -138,7 +138,7 @@ export default function MuvekkillerPage() {
       setEditingClient(null)
       setClientDialogOpen(false)
       loadData()
-    } catch (_error) {
+    } catch {
       toast.error('Hata')
     }
   }
@@ -152,7 +152,7 @@ export default function MuvekkillerPage() {
       
       toast.success('Müvekkil silindi')
       loadData()
-    } catch (_error) {
+    } catch {
       toast.error('Hata')
     }
   }

@@ -175,7 +175,7 @@ export default function IsTakipPage() {
       setTaskForm({ title: '', description: '', status: 'todo', case_id: '', due_date: '' })
       setTaskDialogOpen(false)
       loadData()
-    } catch (_error) {
+    } catch {
       toast.error('Hata')
     }
   }
@@ -214,7 +214,7 @@ export default function IsTakipPage() {
       setEditingTask(null)
       setTaskDialogOpen(false)
       loadData()
-    } catch (_error) {
+    } catch {
       toast.error('Hata')
     }
   }
@@ -228,7 +228,7 @@ export default function IsTakipPage() {
 
       toast.success('Görev silindi')
       loadData()
-    } catch (_error) {
+    } catch {
       toast.error('Hata')
     }
   }

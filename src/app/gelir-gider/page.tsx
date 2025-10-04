@@ -108,32 +108,43 @@ export default function GelirGiderPage() {
         })) as Case[]
       )
 
-      const fetchedTransactions = (transactionsResult.data || []) as Array<Record<string, any>>
+      const fetchedTransactions = (transactionsResult.data || []) as Array<Record<string, unknown>>
       setTransactions(
         fetchedTransactions.map((r) => {
-          const c = Array.isArray(r.case) ? (r.case[0] as any | undefined) : (r.case as any | undefined)
-          const normalizedCase = c
+          const rawCase = Array.isArray((r as Record<string, unknown>).case)
+            ? ((r as Record<string, unknown>).case as Array<Record<string, unknown>>)[0]
+            : ((r as Record<string, unknown>).case as Record<string, unknown> | undefined)
+
+          const clientRaw = rawCase ? (rawCase.client as unknown) : undefined
+          const clientRel = Array.isArray(clientRaw)
+            ? (clientRaw[0] as { id?: unknown; full_name?: unknown } | undefined)
+            : (clientRaw as { id?: unknown; full_name?: unknown } | undefined)
+
+          const normalizedCase = rawCase
             ? {
-                id: String(c.id),
-                title: String(c.title),
-                case_no: c.case_no ? String(c.case_no) : undefined,
-                client_id: c.client_id ? String(c.client_id) : undefined,
-                court_name: c.court_name ? String(c.court_name) : undefined,
-                client: Array.isArray(c.client)
-                  ? (c.client[0] as { id: string; full_name: string } | undefined)
-                  : (c.client as { id: string; full_name: string } | undefined),
+                id: String(rawCase.id as unknown),
+                title: String(rawCase.title as unknown),
+                case_no: rawCase.case_no ? String(rawCase.case_no as unknown) : undefined,
+                client_id: rawCase.client_id ? String(rawCase.client_id as unknown) : undefined,
+                court_name: rawCase.court_name ? String(rawCase.court_name as unknown) : undefined,
+                client: clientRel
+                  ? {
+                      id: String(clientRel.id as unknown),
+                      full_name: String(clientRel.full_name as unknown),
+                    }
+                  : undefined,
               }
             : undefined
 
           return {
-            id: String(r.id),
-            case_id: String(r.case_id),
+            id: String(r.id as unknown),
+            case_id: String(r.case_id as unknown),
             type: r.type as 'income' | 'expense',
-            category: String(r.category),
+            category: String(r.category as unknown),
             amount: Number(r.amount),
-            description: String(r.description ?? ''),
-            transaction_date: String(r.transaction_date),
-            created_at: String(r.created_at),
+            description: String((r.description ?? '') as unknown),
+            transaction_date: String(r.transaction_date as unknown),
+            created_at: String(r.created_at as unknown),
             case: normalizedCase,
           } as IncomeExpense
         }) as IncomeExpense[]
