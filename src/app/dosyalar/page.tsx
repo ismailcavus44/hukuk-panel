@@ -474,7 +474,7 @@ export default function DosyalarPage() {
             setCaseDialogOpen(open)
             if (!open) {
               setEditingCase(null)
-              setCaseForm({ title: '', case_no: '', description: '', status: 'open', client_id: '', car_dealer_id: '', damage_amount: '', court_name: '' })
+              setCaseForm({ title: '', case_no: '', vehicle_plate: '', description: '', status: 'open', client_id: '', car_dealer_id: '', damage_amount: '', court_name: '' })
               setSelectedClient(null)
               setSelectedCarDealer(null)
             }
