@@ -211,6 +211,7 @@ export default function GelirGiderPage() {
     setCaseTransactionDialogOpen(true)
   }
 
+
   const getCategoryOptions = () => {
     if (transactionForm.type === 'income') return incomeCategories
     if (transactionForm.type === 'expense') return [...expenseCategories, ...outgoingCategories]

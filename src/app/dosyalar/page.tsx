@@ -9,10 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, Edit, Trash2, Car } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Car, History, Info, Menu } from 'lucide-react'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useUserRole } from '@/hooks/useUserRole'
+import { CaseProgress, PROGRESS_TYPES, ProgressType } from '@/types/case-progress'
 
 interface Client {
   id: string
@@ -66,6 +67,19 @@ export default function DosyalarPage() {
   const [carDealerAddDialogOpen, setCarDealerAddDialogOpen] = useState(false)
   const [editingCase, setEditingCase] = useState<Case | null>(null)
   const [editingCarDealer, setEditingCarDealer] = useState<CarDealer | null>(null)
+  
+  // Safahat state'leri
+  const [progressDialogOpen, setProgressDialogOpen] = useState(false)
+  const [progressHistoryDialogOpen, setProgressHistoryDialogOpen] = useState(false)
+  const [selectedCaseForProgress, setSelectedCaseForProgress] = useState<Case | null>(null)
+  const [caseProgress, setCaseProgress] = useState<CaseProgress[]>([])
+  const [progressForm, setProgressForm] = useState({
+    progress_type: '' as ProgressType,
+    custom_description: '',
+    progress_date: new Date().toISOString().split('T')[0],
+    notes: ''
+  })
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
   
   // Form states
   const [clientForm, setClientForm] = useState({ full_name: '', tc_no: '', phone: '', email: '' })
@@ -219,6 +233,78 @@ export default function DosyalarPage() {
     } catch {
       toast.error('Hata')
     }
+  }
+
+  // Safahat fonksiyonları
+  const handleAddProgress = (caseItem: Case) => {
+    setSelectedCaseForProgress(caseItem)
+    setProgressForm({
+      progress_type: '' as ProgressType,
+      custom_description: '',
+      progress_date: new Date().toISOString().split('T')[0],
+      notes: ''
+    })
+    setProgressDialogOpen(true)
+  }
+
+  const handleCreateProgress = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      if (!selectedCaseForProgress) return
+
+      const { data: { user } } = await sb.auth.getUser()
+      if (!user) {
+        toast.error('Giriş yapmanız gerekiyor')
+        return
+      }
+
+      const progressData = {
+        case_id: selectedCaseForProgress.id,
+        progress_type: progressForm.progress_type,
+        custom_description: progressForm.progress_type === 'diğer' ? progressForm.custom_description : null,
+        progress_date: progressForm.progress_date,
+        notes: progressForm.notes || null,
+        created_by: user.id
+      }
+
+      const { error } = await sb.from('case_progress').insert(progressData)
+      if (error) throw error
+      
+      toast.success('Safahat kaydı eklendi')
+      setProgressDialogOpen(false)
+      loadData()
+    } catch {
+      toast.error('Hata')
+    }
+  }
+
+  const handleShowProgressHistory = async (caseItem: Case) => {
+    try {
+      setSelectedCaseForProgress(caseItem)
+      
+      const { data, error } = await sb
+        .from('case_progress')
+        .select('*')
+        .eq('case_id', caseItem.id)
+        .order('progress_date', { ascending: false })
+
+      if (error) throw error
+      
+      setCaseProgress(data || [])
+      setProgressHistoryDialogOpen(true)
+    } catch {
+      toast.error('Safahat geçmişi yüklenirken hata oluştu')
+    }
+  }
+
+  const toggleRowExpansion = (caseId: string) => {
+    const newExpandedRows = new Set(expandedRows)
+    if (newExpandedRows.has(caseId)) {
+      newExpandedRows.delete(caseId)
+    } else {
+      newExpandedRows.add(caseId)
+    }
+    setExpandedRows(newExpandedRows)
   }
 
   const handleCreateCase = async (e: React.FormEvent) => {
@@ -535,7 +621,7 @@ export default function DosyalarPage() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="vehicle_plate" className="text-sm font-medium text-gray-700">
-                    Araç Plakası
+                    Araç Plakası *
                   </Label>
                   <Input
                     id="vehicle_plate"
@@ -543,6 +629,7 @@ export default function DosyalarPage() {
                     onChange={(e) => setCaseForm({...caseForm, vehicle_plate: e.target.value.toUpperCase()})}
                     className="h-11"
                     placeholder="Örn: 35 ABC 123"
+                    required
                   />
                 </div>
                   
@@ -560,13 +647,12 @@ export default function DosyalarPage() {
                       step="0.01"
                       min="0"
                     />
-                    <p className="text-xs text-gray-500">Opsiyonel - Hasar bedeli tutarı</p>
                   </div>
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="client_id" className="text-sm font-medium text-gray-700">
-                    Müvekkil
+                    Müvekkil *
                   </Label>
                   <div className="flex gap-2">
                     <div className="flex-1">
@@ -575,6 +661,7 @@ export default function DosyalarPage() {
                         placeholder="Müvekkil seçin"
                         readOnly
                         className="h-11"
+                        required
                       />
                     </div>
                     <Button
@@ -586,7 +673,6 @@ export default function DosyalarPage() {
                       Seç
                     </Button>
                   </div>
-                  <p className="text-xs text-gray-500">Dosyayı hangi müvekkile bağlayacağınızı seçin</p>
                 </div>
                 
                 <div className="space-y-2">
@@ -614,7 +700,6 @@ export default function DosyalarPage() {
                       Seç
                     </Button>
                   </div>
-                  <p className="text-xs text-gray-500">Dosyayı hangi kaportacıdan aldığınızı seçin</p>
                 </div>
                 
                 {caseForm.title === 'Mahrumiyet İcra Dosyası' && (
@@ -630,7 +715,6 @@ export default function DosyalarPage() {
                       className="h-11"
                       placeholder="Örn: İstanbul 1. Asliye Hukuk Mahkemesi"
                     />
-                    <p className="text-xs text-gray-500">Mahrumiyet İcra Dosyası için mahkeme adı zorunludur</p>
                   </div>
                 )}
                 
@@ -850,26 +934,62 @@ export default function DosyalarPage() {
                       {new Date(caseItem.created_at).toLocaleDateString('tr-TR')}
                     </TableCell>
                     <TableCell>
-                      {!isReadOnly && (
-                        <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleEditCase(caseItem)}
-                            className="cursor-pointer"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            onClick={() => handleDeleteCase(caseItem.id)}
-                            className="cursor-pointer"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => toggleRowExpansion(caseItem.id)}
+                          className="cursor-pointer"
+                          title="İşlem seçenekleri"
+                        >
+                            <Menu className="h-4 w-4" />
+                        </Button>
+                        
+                        {expandedRows.has(caseItem.id) && (
+                          <div className="flex gap-2 animate-in slide-in-from-left-2 duration-200">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleShowProgressHistory(caseItem)}
+                              className="cursor-pointer"
+                              title="Safahat geçmişi"
+                            >
+                              <Info className="h-4 w-4" />
+                            </Button>
+                            {!isReadOnly && (
+                              <>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => handleAddProgress(caseItem)}
+                                  className="cursor-pointer"
+                                  title="Safahat ekle"
+                                >
+                                  <History className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => handleEditCase(caseItem)}
+                                  className="cursor-pointer"
+                                  title="Düzenle"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => handleDeleteCase(caseItem.id)}
+                                  className="cursor-pointer"
+                                  title="Sil"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -1193,6 +1313,137 @@ export default function DosyalarPage() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Safahat Ekleme Modal */}
+      <Dialog open={progressDialogOpen} onOpenChange={setProgressDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Safahat Ekle</DialogTitle>
+            <DialogDescription>
+              {selectedCaseForProgress?.title} dosyasına yeni safahat kaydı ekleyin
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreateProgress} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="progress_type" className="text-sm font-medium text-gray-700">
+                Safahat Türü *
+              </Label>
+              <Select value={progressForm.progress_type} onValueChange={(value: ProgressType) => setProgressForm({...progressForm, progress_type: value})}>
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Safahat türünü seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROGRESS_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {progressForm.progress_type === 'diğer' && (
+              <div className="space-y-2">
+                <Label htmlFor="custom_description" className="text-sm font-medium text-gray-700">
+                  Açıklama *
+                </Label>
+                <Input
+                  id="custom_description"
+                  value={progressForm.custom_description}
+                  onChange={(e) => setProgressForm({...progressForm, custom_description: e.target.value})}
+                  required
+                  className="h-11"
+                  placeholder="Özel safahat açıklaması"
+                />
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="progress_date" className="text-sm font-medium text-gray-700">
+                Tarih *
+              </Label>
+              <Input
+                id="progress_date"
+                type="date"
+                value={progressForm.progress_date}
+                onChange={(e) => setProgressForm({...progressForm, progress_date: e.target.value})}
+                required
+                className="h-11"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes" className="text-sm font-medium text-gray-700">
+                Notlar
+              </Label>
+              <Textarea
+                id="notes"
+                value={progressForm.notes}
+                onChange={(e) => setProgressForm({...progressForm, notes: e.target.value})}
+                placeholder="Ek notlar (opsiyonel)"
+                className="min-h-[100px]"
+              />
+            </div>
+
+            <div className="pt-4">
+              <Button type="submit" className="w-full h-11 text-base font-medium">
+                Safahat Ekle
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Safahat Geçmişi Modal */}
+      <Dialog open={progressHistoryDialogOpen} onOpenChange={setProgressHistoryDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="text-xl font-semibold">
+              Safahat Geçmişi - {selectedCaseForProgress?.title}
+            </DialogTitle>
+            <DialogDescription>
+              Dosyanın safahat süreci tarih sırasına göre listelenmiştir
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-hidden">
+            <div className="h-full overflow-y-auto">
+              {caseProgress.length > 0 ? (
+                <div className="space-y-4">
+                  {caseProgress.map((progress) => {
+                    const progressType = PROGRESS_TYPES.find(t => t.value === progress.progress_type)
+                    const displayText = progressType ? progressType.label : progress.custom_description || 'Bilinmeyen'
+                    
+                    return (
+                      <div key={progress.id} className="border rounded-lg p-4 bg-white shadow-sm">
+                        <div className="mb-2">
+                          <h4 className="font-medium text-gray-900">{displayText}</h4>
+                          <p className="text-sm text-gray-500">
+                            {new Date(progress.progress_date).toLocaleDateString('tr-TR')}
+                          </p>
+                        </div>
+                        {progress.notes && (
+                          <p className="text-sm text-gray-600 mt-2 bg-gray-50 p-2 rounded">
+                            {progress.notes}
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-gray-400 mb-4">
+                    <History className="w-16 h-16 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Henüz safahat kaydı yok</h3>
+                  <p className="text-gray-500">Bu dosya için henüz safahat kaydı eklenmemiş</p>
+                </div>
+              )}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

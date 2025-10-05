@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, Edit, Trash2, FileText, User, Info } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, FileText, User, Info, History } from 'lucide-react'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useUserRole } from '@/hooks/useUserRole'
+import { PROGRESS_TYPES } from '@/types/case-progress'
 
 interface Client {
   id: string
@@ -18,14 +19,25 @@ interface Client {
   tc_no?: string
   phone?: string
   email?: string
+  birth_date?: string
   created_at: string
   cases?: Case[]
+}
+
+interface CaseProgress {
+  id: string
+  progress_type: string
+  custom_description?: string
+  progress_date: string
+  notes?: string
+  created_at: string
 }
 
 interface Case {
   id: string
   title: string
   case_no?: string
+  vehicle_plate?: string
   description?: string
   status: string
   client_id: string
@@ -34,6 +46,7 @@ interface Case {
   countdown_expires_at?: string
   is_countdown_active?: boolean
   created_at: string
+  case_progress?: CaseProgress[]
 }
 
 export default function MuvekkillerPage() {
@@ -49,13 +62,15 @@ export default function MuvekkillerPage() {
   const [selectedClientForInfo, setSelectedClientForInfo] = useState<Client | null>(null)
   const [caseDetailDialogOpen, setCaseDetailDialogOpen] = useState(false)
   const [selectedCaseForDetail, setSelectedCaseForDetail] = useState<Case | null>(null)
+  const [caseProgressDialogOpen, setCaseProgressDialogOpen] = useState(false)
   
   // Form state
   const [clientForm, setClientForm] = useState({ 
     full_name: '', 
     tc_no: '', 
     phone: '', 
-    email: '' 
+    email: '',
+    birth_date: ''
   })
   
   const sb = supabaseBrowser()
@@ -71,9 +86,10 @@ export default function MuvekkillerPage() {
       const { data, error } = await sb
         .from('clients')
         .select(`
-          id, full_name, tc_no, phone, email, created_at,
-          cases:cases(id, title, case_no, description, status, client_id, damage_amount, 
-                      insurance_application_date, countdown_expires_at, is_countdown_active, created_at)
+          id, full_name, tc_no, phone, email, birth_date, created_at,
+          cases:cases(id, title, case_no, vehicle_plate, description, status, client_id, damage_amount, 
+                      insurance_application_date, countdown_expires_at, is_countdown_active, created_at,
+                      case_progress:case_progress(id, progress_type, custom_description, progress_date, notes, created_at))
         `)
         .order('full_name')
 
@@ -104,7 +120,7 @@ export default function MuvekkillerPage() {
       if (error) throw error
       
       toast.success('Müvekkil başarıyla eklendi')
-      setClientForm({ full_name: '', tc_no: '', phone: '', email: '' })
+      setClientForm({ full_name: '', tc_no: '', phone: '', email: '', birth_date: '' })
       setClientDialogOpen(false)
       loadData()
     } catch {
@@ -118,7 +134,8 @@ export default function MuvekkillerPage() {
       full_name: client.full_name,
       tc_no: client.tc_no || '',
       phone: client.phone || '',
-      email: client.email || ''
+      email: client.email || '',
+      birth_date: client.birth_date || ''
     })
     setClientDialogOpen(true)
   }
@@ -136,7 +153,7 @@ export default function MuvekkillerPage() {
       if (error) throw error
       
       toast.success('Müvekkil bilgileri güncellendi')
-      setClientForm({ full_name: '', tc_no: '', phone: '', email: '' })
+      setClientForm({ full_name: '', tc_no: '', phone: '', email: '', birth_date: '' })
       setEditingClient(null)
       setClientDialogOpen(false)
       loadData()
@@ -159,14 +176,14 @@ export default function MuvekkillerPage() {
     }
   }
 
-  const handleShowClientInfo = (client: Client) => {
-    setSelectedClientForInfo(client)
-    setClientInfoDialogOpen(true)
-  }
-
   const handleShowCaseDetail = (caseItem: Case) => {
     setSelectedCaseForDetail(caseItem)
     setCaseDetailDialogOpen(true)
+  }
+
+  const handleShowClientInfo = (client: Client) => {
+    setSelectedClientForInfo(client)
+    setClientInfoDialogOpen(true)
   }
 
   const filteredClients = clients.filter(client =>
@@ -190,7 +207,7 @@ export default function MuvekkillerPage() {
           setClientDialogOpen(open)
           if (!open) {
             setEditingClient(null)
-            setClientForm({ full_name: '', tc_no: '', phone: '', email: '' })
+            setClientForm({ full_name: '', tc_no: '', phone: '', email: '', birth_date: '' })
           }
         }}>
           <DialogTrigger asChild>
@@ -268,6 +285,19 @@ export default function MuvekkillerPage() {
                   />
                 </div>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="birth_date" className="text-sm font-medium text-gray-700">
+                  Doğum Tarihi
+                </Label>
+                <Input
+                  id="birth_date"
+                  type="date"
+                  value={clientForm.birth_date}
+                  onChange={(e) => setClientForm({...clientForm, birth_date: e.target.value})}
+                  className="h-11"
+                />
+              </div>
               
               <div className="pt-4">
                 <Button type="submit" className="w-full h-11 text-base font-medium">
@@ -280,8 +310,8 @@ export default function MuvekkillerPage() {
 
         {/* Müvekkil Dosya Bilgileri Modal */}
         <Dialog open={clientInfoDialogOpen} onOpenChange={setClientInfoDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[80vh]">
-            <DialogHeader>
+          <DialogContent className="w-[98vw] max-w-none max-h-[80vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle className="text-xl font-semibold">
                 {selectedClientForInfo?.full_name} - Dosya Listesi
               </DialogTitle>
@@ -291,27 +321,28 @@ export default function MuvekkillerPage() {
             </DialogHeader>
             
             {selectedClientForInfo && (
-              <div className="space-y-4">
+              <div className="flex-1 overflow-hidden flex flex-col">
                 {/* Dosya Listesi */}
-                <div>
+                <div className="flex-1 overflow-hidden">
                   <h3 className="font-semibold text-lg mb-3">
                     Dosyalar ({selectedClientForInfo.cases?.length || 0})
                   </h3>
                   
                   {selectedClientForInfo.cases && selectedClientForInfo.cases.length > 0 ? (
-                    <div className="max-h-96 overflow-y-auto">
+                    <div className="h-full border rounded-lg">
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Dosya Başlığı</TableHead>
-                            <TableHead>Dosya No</TableHead>
-                            <TableHead>Durum</TableHead>
-                            <TableHead>Oluşturulma Tarihi</TableHead>
+                            <TableHead className="w-[25%]">Dosya Başlığı</TableHead>
+                            <TableHead className="w-[20%]">Dosya No</TableHead>
+                            <TableHead className="w-[20%]">Araç Plakası</TableHead>
+                            <TableHead className="w-[15%]">Durum</TableHead>
+                            <TableHead className="w-[20%]">Oluşturulma Tarihi</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {selectedClientForInfo.cases.map((caseItem) => (
-                            <TableRow key={caseItem.id}>
+                            <TableRow key={caseItem.id} className="hover:bg-gray-50">
                               <TableCell className="font-medium">{caseItem.title}</TableCell>
                               <TableCell>
                                 {caseItem.case_no ? (
@@ -324,6 +355,11 @@ export default function MuvekkillerPage() {
                                 ) : (
                                   <span className="text-gray-400">-</span>
                                 )}
+                              </TableCell>
+                              <TableCell>
+                                <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+                                  {caseItem.vehicle_plate || '-'}
+                                </span>
                               </TableCell>
                               <TableCell>
                                 <Badge variant={caseItem.status === 'open' ? 'default' : 'secondary'}>
@@ -339,9 +375,10 @@ export default function MuvekkillerPage() {
                       </Table>
                     </div>
                   ) : (
-                    <div className="text-center py-8">
-                      <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500">Bu müvekkile henüz dosya kayıtlı değil</p>
+                    <div className="text-center py-12">
+                      <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500 text-lg">Bu müvekkile henüz dosya kayıtlı değil</p>
+                      <p className="text-gray-400 text-sm mt-2">Dosyalar sayfasından yeni dosya ekleyebilirsiniz</p>
                     </div>
                   )}
                 </div>
@@ -352,14 +389,29 @@ export default function MuvekkillerPage() {
 
         {/* Dosya Detay Modal */}
         <Dialog open={caseDetailDialogOpen} onOpenChange={setCaseDetailDialogOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle className="text-xl font-semibold">
-                Dosya Detayları
-              </DialogTitle>
-              <DialogDescription className="text-base">
-                Dosya bilgileri ve durumu
-              </DialogDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <DialogTitle className="text-xl font-semibold">
+                    Dosya Detayları
+                  </DialogTitle>
+                  <DialogDescription className="text-base">
+                    Dosya bilgileri ve durumu
+                  </DialogDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                    onClick={() => setCaseProgressDialogOpen(true)}
+                  >
+                    <History className="h-4 w-4" />
+                    Safahat Geçmişi
+                  </Button>
+                </div>
+              </div>
             </DialogHeader>
             
             {selectedCaseForDetail && (
@@ -374,6 +426,11 @@ export default function MuvekkillerPage() {
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Dosya No</p>
                     <p className="font-medium">{selectedCaseForDetail.case_no || '-'}</p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Araç Plakası</p>
+                    <p className="font-medium">{selectedCaseForDetail.vehicle_plate || '-'}</p>
                   </div>
                   
                   <div>
@@ -448,6 +505,57 @@ export default function MuvekkillerPage() {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Safahat Geçmişi Modal */}
+        <Dialog open={caseProgressDialogOpen} onOpenChange={setCaseProgressDialogOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold">
+                Safahat Geçmişi
+              </DialogTitle>
+              <DialogDescription className="text-base">
+                {selectedCaseForDetail?.title} dosyasının safahat geçmişi
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {selectedCaseForDetail?.case_progress && selectedCaseForDetail.case_progress.length > 0 ? (
+                <div className="space-y-4">
+                  {selectedCaseForDetail.case_progress
+                    .sort((a, b) => new Date(a.progress_date).getTime() - new Date(b.progress_date).getTime())
+                    .map((progress) => {
+                      const progressType = PROGRESS_TYPES.find(t => t.value === progress.progress_type)
+                      const displayText = progressType ? progressType.label : progress.custom_description || 'Bilinmeyen'
+                      
+                      return (
+                        <div key={progress.id} className="border rounded-lg p-4 bg-white shadow-sm">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-900">{displayText}</h4>
+                              <p className="text-sm text-gray-500">
+                                {new Date(progress.progress_date).toLocaleDateString('tr-TR')}
+                              </p>
+                            </div>
+                          </div>
+                          {progress.notes && (
+                            <p className="text-sm text-gray-600 mt-2 bg-gray-50 p-2 rounded">
+                              {progress.notes}
+                            </p>
+                          )}
+                        </div>
+                      )
+                    })}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">Bu dosya için henüz safahat kaydı bulunmuyor</p>
+                  <p className="text-sm text-gray-400 mt-2">Dosyalar sayfasından safahat ekleyebilirsiniz</p>
+                </div>
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       </div>

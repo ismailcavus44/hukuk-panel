@@ -223,7 +223,7 @@ export default function IsTakipPage() {
 
   const handleDeleteTask = async (taskId: string) => {
     if (!confirm('Bu görevi silmek istediğinizden emin misiniz?')) return
-
+    
     try {
       const { error } = await sb.from('tasks').delete().eq('id', taskId)
       if (error) throw error
@@ -234,6 +234,7 @@ export default function IsTakipPage() {
       toast.error('Hata')
     }
   }
+
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string)
