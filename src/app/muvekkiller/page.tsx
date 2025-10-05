@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Plus, Search, Edit, Trash2, FileText, User, Info } from 'lucide-react'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { useUserRole } from '@/hooks/useUserRole'
 
 interface Client {
   id: string
@@ -39,6 +40,7 @@ export default function MuvekkillerPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const { isReadOnly } = useUserRole()
   
   // Dialog states
   const [clientDialogOpen, setClientDialogOpen] = useState(false)
@@ -192,10 +194,12 @@ export default function MuvekkillerPage() {
           }
         }}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Yeni Müvekkil
-            </Button>
+            {!isReadOnly && (
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Yeni Müvekkil
+              </Button>
+            )}
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -511,22 +515,26 @@ export default function MuvekkillerPage() {
                         >
                           <Info className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleEditClient(client)}
-                          className="cursor-pointer"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => handleDeleteClient(client.id)}
-                          className="cursor-pointer"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {!isReadOnly && (
+                          <>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleEditClient(client)}
+                              className="cursor-pointer"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              onClick={() => handleDeleteClient(client.id)}
+                              className="cursor-pointer"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

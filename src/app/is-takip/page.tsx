@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Plus, Edit, Trash2, GripVertical } from 'lucide-react'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { useUserRole } from '@/hooks/useUserRole'
 import {
   DndContext,
   DragOverlay,
@@ -103,6 +104,7 @@ export default function IsTakipPage() {
   const [cases, setCases] = useState<Case[]>([])
   const [loading, setLoading] = useState(true)
   const [activeId, setActiveId] = useState<string | null>(null)
+  const { isReadOnly } = useUserRole()
 
   const [taskDialogOpen, setTaskDialogOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
@@ -377,10 +379,12 @@ export default function IsTakipPage() {
           }
         }}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Yeni Görev
-            </Button>
+            {!isReadOnly && (
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Yeni Görev
+              </Button>
+            )}
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -491,24 +495,26 @@ export default function IsTakipPage() {
                       {columnTasks.map((task) => (
                         <div key={task.id} className="relative group">
                           <TaskCard task={task} />
-                          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 w-7 p-0 bg-white cursor-pointer"
-                              onClick={() => handleEditTask(task)}
-                            >
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 w-7 p-0 bg-white cursor-pointer text-red-600"
-                              onClick={() => handleDeleteTask(task.id)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
+                          {!isReadOnly && (
+                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 w-7 p-0 bg-white cursor-pointer"
+                                onClick={() => handleEditTask(task)}
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 w-7 p-0 bg-white cursor-pointer text-red-600"
+                                onClick={() => handleDeleteTask(task.id)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       ))}
                       {columnTasks.length === 0 && (

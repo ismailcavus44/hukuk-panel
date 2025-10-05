@@ -11,6 +11,7 @@ import { Document, Packer, Paragraph, TextRun, AlignmentType } from 'docx'
 import { saveAs } from 'file-saver'
 import { toast } from 'sonner'
 import { supabaseBrowser } from '@/lib/supabase/client'
+import { useUserRole } from '@/hooks/useUserRole'
 
 interface DilekceForm {
   dilekceTuru: string
@@ -46,6 +47,7 @@ interface InsuranceForm {
 }
 
 export default function DilekcePage() {
+  const { isReadOnly } = useUserRole()
   const [form, setForm] = useState<DilekceForm>({
     dilekceTuru: '',
     mahkeme: '',
@@ -457,7 +459,7 @@ export default function DilekcePage() {
                 <Label htmlFor="dilekceTuru" className="text-sm font-medium text-gray-700">
                   Dilekçe Türü *
                 </Label>
-                <Select value={form.dilekceTuru} onValueChange={(value) => setForm({...form, dilekceTuru: value})}>
+                <Select value={form.dilekceTuru} onValueChange={(value) => setForm({...form, dilekceTuru: value})} disabled={isReadOnly}>
                   <SelectTrigger className="h-11">
                     <SelectValue placeholder="Dilekçe türünü seçin" />
                   </SelectTrigger>
@@ -497,55 +499,55 @@ export default function DilekcePage() {
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-gray-700">T.C. Kimlik No</Label>
-                      <Input value={insuranceForm.client_tc} readOnly className="h-11 bg-gray-50" />
+                      <Input value={insuranceForm.client_tc} readOnly className="h-11 bg-gray-50" disabled={isReadOnly} />
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-gray-700">Müvekkil Adresi</Label>
-                    <Textarea value={insuranceForm.client_address} onChange={(e) => setInsuranceForm({...insuranceForm, client_address: e.target.value})} placeholder="Müvekkil adresi (istemiyorsanız boş bırakın)" className="min-h-[80px]" />
+                    <Textarea value={insuranceForm.client_address} onChange={(e) => setInsuranceForm({...insuranceForm, client_address: e.target.value})} placeholder="Müvekkil adresi (istemiyorsanız boş bırakın)" className="min-h-[80px]" disabled={isReadOnly} />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-gray-700">Müvekkil Araç Plakası *</Label>
-                      <Input value={insuranceForm.client_plate} onChange={(e) => setInsuranceForm({...insuranceForm, client_plate: e.target.value.toUpperCase()})} className="h-11" placeholder="Örn: 35 ABC 123" />
+                      <Input value={insuranceForm.client_plate} onChange={(e) => setInsuranceForm({...insuranceForm, client_plate: e.target.value.toUpperCase()})} className="h-11" placeholder="Örn: 35 ABC 123" disabled={isReadOnly} />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-gray-700">Karşı Araç Plakası *</Label>
-                      <Input value={insuranceForm.opponent_plate} onChange={(e) => setInsuranceForm({...insuranceForm, opponent_plate: e.target.value.toUpperCase()})} className="h-11" placeholder="Örn: 45 XYZ 987" />
+                      <Input value={insuranceForm.opponent_plate} onChange={(e) => setInsuranceForm({...insuranceForm, opponent_plate: e.target.value.toUpperCase()})} className="h-11" placeholder="Örn: 45 XYZ 987" disabled={isReadOnly} />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-gray-700">Tutar (TL) *</Label>
-                      <Input type="number" value={insuranceForm.amount} onChange={(e) => setInsuranceForm({...insuranceForm, amount: e.target.value})} className="h-11" placeholder="Örn: 300000" />
+                      <Input type="number" value={insuranceForm.amount} onChange={(e) => setInsuranceForm({...insuranceForm, amount: e.target.value})} className="h-11" placeholder="Örn: 300000" disabled={isReadOnly} />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-gray-700">Kaza Tarihi *</Label>
-                      <Input value={insuranceForm.accident_date} onChange={(e) => setInsuranceForm({...insuranceForm, accident_date: e.target.value})} className="h-11" placeholder="GG/AA/YYYY" />
+                      <Input value={insuranceForm.accident_date} onChange={(e) => setInsuranceForm({...insuranceForm, accident_date: e.target.value})} className="h-11" placeholder="GG/AA/YYYY" disabled={isReadOnly} />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-gray-700">Poliçe No *</Label>
-                      <Input value={insuranceForm.policy_no} onChange={(e) => setInsuranceForm({...insuranceForm, policy_no: e.target.value})} className="h-11" placeholder="Poliçe numarası" />
+                      <Input value={insuranceForm.policy_no} onChange={(e) => setInsuranceForm({...insuranceForm, policy_no: e.target.value})} className="h-11" placeholder="Poliçe numarası" disabled={isReadOnly} />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-gray-700">Poliçe Tarihi *</Label>
-                      <Input value={insuranceForm.policy_date} onChange={(e) => setInsuranceForm({...insuranceForm, policy_date: e.target.value})} className="h-11" placeholder="GG/AA/YYYY" />
+                      <Input value={insuranceForm.policy_date} onChange={(e) => setInsuranceForm({...insuranceForm, policy_date: e.target.value})} className="h-11" placeholder="GG/AA/YYYY" disabled={isReadOnly} />
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-gray-700">Sigorta Şirketi *</Label>
-                    <Input value={insuranceForm.insurer_name} onChange={(e) => setInsuranceForm({...insuranceForm, insurer_name: e.target.value})} className="h-11" placeholder="Örn: Ankara Sigorta A.Ş." />
+                    <Input value={insuranceForm.insurer_name} onChange={(e) => setInsuranceForm({...insuranceForm, insurer_name: e.target.value})} className="h-11" placeholder="Örn: Ankara Sigorta A.Ş." disabled={isReadOnly} />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-gray-700">Sigorta Şirketi Adresi</Label>
-                    <Textarea value={insuranceForm.insurer_address} onChange={(e) => setInsuranceForm({...insuranceForm, insurer_address: e.target.value})} placeholder="Adres" className="min-h-[80px]" />
+                    <Textarea value={insuranceForm.insurer_address} onChange={(e) => setInsuranceForm({...insuranceForm, insurer_address: e.target.value})} placeholder="Adres" className="min-h-[80px]" disabled={isReadOnly} />
                   </div>
 
                   <div className="space-y-2">

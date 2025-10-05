@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { TrendingUp, TrendingDown, Plus, Search, DollarSign, Info } from 'lucide-react'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { useUserRole } from '@/hooks/useUserRole'
 
 interface Case {
   id: string
@@ -43,6 +44,7 @@ export default function GelirGiderPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
   const [categoryFilter, setCategoryFilter] = useState('all')
+  const { isReadOnly } = useUserRole()
 
   const [transactionDialogOpen, setTransactionDialogOpen] = useState(false)
   const [caseTransactionDialogOpen, setCaseTransactionDialogOpen] = useState(false)
@@ -257,10 +259,12 @@ export default function GelirGiderPage() {
             }
           }}>
             <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Yeni İşlem
-              </Button>
+              {!isReadOnly && (
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Yeni İşlem
+                </Button>
+              )}
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -479,25 +483,27 @@ export default function GelirGiderPage() {
                           >
                             <Info className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => {
-                              setTransactionForm({
-                                case_id: group.case.id,
-                                type: 'income',
-                                category: '',
-                                amount: '',
-                                description: '',
-                                transaction_date: new Date().toISOString().split('T')[0]
-                              })
-                              setTransactionDialogOpen(true)
-                            }}
-                            className="cursor-pointer"
-                            title="Bu dosyaya işlem ekle"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
+                          {!isReadOnly && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => {
+                                setTransactionForm({
+                                  case_id: group.case.id,
+                                  type: 'income',
+                                  category: '',
+                                  amount: '',
+                                  description: '',
+                                  transaction_date: new Date().toISOString().split('T')[0]
+                                })
+                                setTransactionDialogOpen(true)
+                              }}
+                              className="cursor-pointer"
+                              title="Bu dosyaya işlem ekle"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Plus, Search, Edit, Trash2, Car } from 'lucide-react'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { useUserRole } from '@/hooks/useUserRole'
 
 interface Client {
   id: string
@@ -53,6 +54,7 @@ export default function DosyalarPage() {
   const [carDealers, setCarDealers] = useState<CarDealer[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const { isReadOnly } = useUserRole()
   const [statusFilter, setStatusFilter] = useState('all')
   
   // Dialog states
@@ -390,10 +392,12 @@ export default function DosyalarPage() {
           
           <Dialog open={clientDialogOpen} onOpenChange={setClientDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">
-                <Plus className="h-4 w-4 mr-2" />
-                Yeni Müvekkil
-              </Button>
+              {!isReadOnly && (
+                <Button variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Yeni Müvekkil
+                </Button>
+              )}
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -480,10 +484,12 @@ export default function DosyalarPage() {
             }
           }}>
             <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Yeni Dosya
-              </Button>
+              {!isReadOnly && (
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Yeni Dosya
+                </Button>
+              )}
             </DialogTrigger>
             <DialogContent>
             <DialogHeader>
@@ -844,24 +850,26 @@ export default function DosyalarPage() {
                       {new Date(caseItem.created_at).toLocaleDateString('tr-TR')}
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleEditCase(caseItem)}
-                          className="cursor-pointer"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => handleDeleteCase(caseItem.id)}
-                          className="cursor-pointer"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      {!isReadOnly && (
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleEditCase(caseItem)}
+                            className="cursor-pointer"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => handleDeleteCase(caseItem.id)}
+                            className="cursor-pointer"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -881,17 +889,19 @@ export default function DosyalarPage() {
           <DialogHeader className="flex-shrink-0">
             <div className="flex justify-between items-center pr-8">
               <DialogTitle className="text-xl font-semibold">Kaportacı İstatistikleri</DialogTitle>
-              <Button 
-                variant="outline"
-                onClick={() => {
-                  setCarDealerStatsDialogOpen(false)
-                  setCarDealerAddDialogOpen(true)
-                }}
-                className="cursor-pointer"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Yeni Kaportacı Ekle
-              </Button>
+              {!isReadOnly && (
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    setCarDealerStatsDialogOpen(false)
+                    setCarDealerAddDialogOpen(true)
+                  }}
+                  className="cursor-pointer"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Yeni Kaportacı Ekle
+                </Button>
+              )}
             </div>
           </DialogHeader>
           
@@ -933,29 +943,31 @@ export default function DosyalarPage() {
                           <p className="text-xs text-gray-500 mb-2">
                             {new Date(dealer.created_at).toLocaleDateString('tr-TR')}
                           </p>
-                          <div className="flex gap-1">
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => {
-                                setCarDealerStatsDialogOpen(false)
-                                handleEditCarDealer(dealer)
-                              }}
-                              className="h-7 px-2 text-xs cursor-pointer"
-                              title="Düzenle"
-                            >
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => handleDeleteCarDealer(dealer.id)}
-                              className="h-7 px-2 text-xs text-red-600 hover:text-red-700 cursor-pointer"
-                              title="Sil"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
+                          {!isReadOnly && (
+                            <div className="flex gap-1">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => {
+                                  setCarDealerStatsDialogOpen(false)
+                                  handleEditCarDealer(dealer)
+                                }}
+                                className="h-7 px-2 text-xs cursor-pointer"
+                                title="Düzenle"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => handleDeleteCarDealer(dealer.id)}
+                                className="h-7 px-2 text-xs text-red-600 hover:text-red-700 cursor-pointer"
+                                title="Sil"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                       
