@@ -44,6 +44,7 @@ interface Case {
   car_dealer_id?: string
   damage_amount?: number
   court_name?: string
+  sub_category?: string
   created_at: string
   client?: Client
   car_dealer?: CarDealer
@@ -93,7 +94,8 @@ export default function DosyalarPage() {
     client_id: '',
     car_dealer_id: '',
     damage_amount: '',
-    court_name: ''
+    court_name: '',
+    sub_category: ''
   })
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [selectedCarDealer, setSelectedCarDealer] = useState<CarDealer | null>(null)
@@ -118,7 +120,7 @@ export default function DosyalarPage() {
       const [casesResult, clientsResult, carDealersResult] = await Promise.all([
         sb.from('cases')
           .select(`
-            id, title, case_no, vehicle_plate, description, status, client_id, car_dealer_id, damage_amount, court_name,
+            id, title, case_no, vehicle_plate, description, status, client_id, car_dealer_id, damage_amount, court_name, sub_category,
             created_at,
             client:clients(id, full_name, phone, email),
             car_dealer:car_dealers(id, name, phone, email)
@@ -317,8 +319,14 @@ export default function DosyalarPage() {
         return
       }
 
+      const finalTitle = caseForm.title === 'Tahkim Başvurusu' && caseForm.sub_category 
+        ? `${caseForm.title} (${caseForm.sub_category})`
+        : caseForm.title
+
       const newCase = {
         ...caseForm,
+        title: finalTitle,
+        sub_category: caseForm.title === 'Tahkim Başvurusu' ? (caseForm.sub_category || null) : null,
         damage_amount: caseForm.damage_amount ? parseFloat(caseForm.damage_amount) : null,
         vehicle_plate: caseForm.vehicle_plate ? caseForm.vehicle_plate.toUpperCase() : null,
         car_dealer_id: caseForm.car_dealer_id || null,
@@ -331,7 +339,7 @@ export default function DosyalarPage() {
       
       toast.success('Dosya başarıyla oluşturuldu')
       
-      setCaseForm({ title: '', case_no: '', vehicle_plate: '', description: '', status: 'open', client_id: '', car_dealer_id: '', damage_amount: '', court_name: '' })
+      setCaseForm({ title: '', case_no: '', vehicle_plate: '', description: '', status: 'open', client_id: '', car_dealer_id: '', damage_amount: '', court_name: '', sub_category: '' })
       setSelectedClient(null)
       setSelectedCarDealer(null)
       setCaseDialogOpen(false)
@@ -343,8 +351,21 @@ export default function DosyalarPage() {
 
   const handleEditCase = (caseItem: Case) => {
     setEditingCase(caseItem)
+    
+    // Tahkim Başvurusu için alt kategoriyi parse et
+    let title = caseItem.title
+    let subCategory = ''
+    
+    if (caseItem.title.startsWith('Tahkim Başvurusu (')) {
+      const match = caseItem.title.match(/Tahkim Başvurusu \((DK|HF)\)/)
+      if (match) {
+        title = 'Tahkim Başvurusu'
+        subCategory = match[1]
+      }
+    }
+    
     setCaseForm({
-      title: caseItem.title,
+      title: title,
       case_no: caseItem.case_no || '',
       vehicle_plate: caseItem.vehicle_plate || '',
       description: caseItem.description || '',
@@ -352,7 +373,8 @@ export default function DosyalarPage() {
       client_id: caseItem.client_id || '',
       car_dealer_id: caseItem.car_dealer_id || '',
       damage_amount: caseItem.damage_amount?.toString() || '',
-      court_name: caseItem.court_name || ''
+      court_name: caseItem.court_name || '',
+      sub_category: subCategory
     })
     
     // Müvekkil ve kaportacı bilgilerini bul ve set et
@@ -369,10 +391,15 @@ export default function DosyalarPage() {
     if (!editingCase) return
 
     try {
+      const finalTitle = caseForm.title === 'Tahkim Başvurusu' && caseForm.sub_category 
+        ? `${caseForm.title} (${caseForm.sub_category})`
+        : caseForm.title
+
       const { error } = await sb
         .from('cases')
         .update({
-          title: caseForm.title,
+          title: finalTitle,
+          sub_category: caseForm.title === 'Tahkim Başvurusu' ? (caseForm.sub_category || null) : null,
           case_no: caseForm.case_no,
           vehicle_plate: caseForm.vehicle_plate ? caseForm.vehicle_plate.toUpperCase() : null,
           description: caseForm.description,
@@ -387,7 +414,7 @@ export default function DosyalarPage() {
       if (error) throw error
       
       toast.success('Dosya bilgileri güncellendi')
-      setCaseForm({ title: '', case_no: '', vehicle_plate: '', description: '', status: 'open', client_id: '', car_dealer_id: '', damage_amount: '', court_name: '' })
+      setCaseForm({ title: '', case_no: '', vehicle_plate: '', description: '', status: 'open', client_id: '', car_dealer_id: '', damage_amount: '', court_name: '', sub_category: '' })
       setSelectedClient(null)
       setSelectedCarDealer(null)
       setEditingCase(null)
@@ -564,7 +591,7 @@ export default function DosyalarPage() {
             setCaseDialogOpen(open)
             if (!open) {
               setEditingCase(null)
-              setCaseForm({ title: '', case_no: '', vehicle_plate: '', description: '', status: 'open', client_id: '', car_dealer_id: '', damage_amount: '', court_name: '' })
+              setCaseForm({ title: '', case_no: '', vehicle_plate: '', description: '', status: 'open', client_id: '', car_dealer_id: '', damage_amount: '', court_name: '', sub_category: '' })
               setSelectedClient(null)
               setSelectedCarDealer(null)
             }
@@ -591,7 +618,7 @@ export default function DosyalarPage() {
                   <Label htmlFor="title" className="text-sm font-medium text-gray-700">
                     Dosya Başlığı *
                   </Label>
-                  <Select value={caseForm.title} onValueChange={(value) => setCaseForm({...caseForm, title: value})}>
+                  <Select value={caseForm.title} onValueChange={(value) => setCaseForm({...caseForm, title: value, sub_category: ''})}>
                     <SelectTrigger className="h-11">
                       <SelectValue placeholder="Dosya başlığını seçin" />
                     </SelectTrigger>
@@ -604,6 +631,21 @@ export default function DosyalarPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                
+                {caseForm.title === 'Tahkim Başvurusu' && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">Alt Kategori *</Label>
+                    <Select value={caseForm.sub_category} onValueChange={(value) => setCaseForm({ ...caseForm, sub_category: value })}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Alt kategori seçin" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="DK">DK</SelectItem>
+                        <SelectItem value="HF">HF</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -1418,11 +1460,35 @@ export default function DosyalarPage() {
                     
                     return (
                       <div key={progress.id} className="border rounded-lg p-4 bg-white shadow-sm">
-                        <div className="mb-2">
-                          <h4 className="font-medium text-gray-900">{displayText}</h4>
-                          <p className="text-sm text-gray-500">
-                            {new Date(progress.progress_date).toLocaleDateString('tr-TR')}
-                          </p>
+                        <div className="mb-2 flex items-start justify-between">
+                          <div>
+                            <h4 className="font-medium text-gray-900">{displayText}</h4>
+                            <p className="text-sm text-gray-500">
+                              {new Date(progress.progress_date).toLocaleDateString('tr-TR')}
+                            </p>
+                          </div>
+                          {!isReadOnly && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              title="Safahat kaydını sil"
+                              onClick={async () => {
+                                const confirmed = window.confirm('Bu safahat kaydını silmek istiyor musunuz?')
+                                if (!confirmed) return
+                                try {
+                                  const { error } = await sb.from('case_progress').delete().eq('id', progress.id)
+                                  if (error) throw error
+                                  setCaseProgress(prev => prev.filter(p => p.id !== progress.id))
+                                  toast.success('Safahat kaydı silindi')
+                                } catch {
+                                  toast.error('Safahat kaydı silinemedi')
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                         {progress.notes && (
                           <p className="text-sm text-gray-600 mt-2 bg-gray-50 p-2 rounded">

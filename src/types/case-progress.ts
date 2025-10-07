@@ -25,3 +25,4 @@ export const PROGRESS_TYPES = [
 ] as const
 
 export type ProgressType = typeof PROGRESS_TYPES[number]['value']
+

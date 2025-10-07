@@ -38,3 +38,4 @@ CREATE INDEX IF NOT EXISTS idx_case_progress_case_id ON public.case_progress(cas
 CREATE INDEX IF NOT EXISTS idx_case_progress_created_by ON public.case_progress(created_by);
 CREATE INDEX IF NOT EXISTS idx_case_progress_progress_date ON public.case_progress(progress_date);
 CREATE INDEX IF NOT EXISTS idx_case_progress_progress_type ON public.case_progress(progress_type);
+

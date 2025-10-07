@@ -26,3 +26,4 @@ export const canDelete = (userRole: UserRole): boolean => {
 export const canCreate = (userRole: UserRole): boolean => {
   return hasPermission(userRole, 'create')
 }
+

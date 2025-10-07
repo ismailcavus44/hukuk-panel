@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
-import { TrendingUp, TrendingDown, Plus, Search, DollarSign, Info } from 'lucide-react'
+import { TrendingUp, TrendingDown, Plus, Search, DollarSign, Info, Trash2 } from 'lucide-react'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useUserRole } from '@/hooks/useUserRole'
@@ -241,6 +241,28 @@ export default function GelirGiderPage() {
     }
   }
 
+  const handleDeleteTransaction = async (transactionId: string) => {
+    if (isReadOnly) return
+    const confirmed = window.confirm('Bu işlemi silmek istediğinize emin misiniz?')
+    if (!confirmed) return
+    try {
+      const { error } = await sb.from('income_expenses').delete().eq('id', transactionId)
+      if (error) throw error
+      toast.success('İşlem silindi')
+      // UI state güncelle
+      setTransactions(prev => prev.filter(t => t.id !== transactionId))
+      setSelectedCaseForTransaction(prev => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          transactions: prev.transactions.filter(t => t.id !== transactionId)
+        }
+      })
+    } catch {
+      toast.error('İşlem silinemedi')
+    }
+  }
+
   if (loading) {
     return <div className="flex justify-center items-center h-64">Yükleniyor...</div>
   }
@@ -284,7 +306,7 @@ export default function GelirGiderPage() {
                         const isCourtCase = caseItem.title === 'Mahrumiyet İcra Dosyası'
                         const displayText = isCourtCase && caseItem.court_name
                           ? `${caseItem.court_name} ${caseItem.case_no ? `(${caseItem.case_no})` : ''}`
-                          : `${caseItem.title} ${caseItem.case_no ? `(${caseItem.case_no})` : ''} - ${caseItem.client?.full_name ?? ''}`
+                          : `${caseItem.title} ${caseItem.case_no ? `(${caseItem.case_no})` : ''} ${caseItem.client?.full_name ? `- ${caseItem.client.full_name}` : ''}`
                         return (
                           <SelectItem key={caseItem.id} value={caseItem.id}>{displayText}</SelectItem>
                         )
@@ -449,14 +471,24 @@ export default function GelirGiderPage() {
                         <div>
                           {isCourtCase && group.case.court_name ? (
                             <>
+                              <p className="font-medium">{group.case.title}</p>
                               <p className="font-medium text-blue-600">{group.case.court_name}</p>
-                              <p className="text-sm text-gray-500">{group.case.case_no || '-'}</p>
+                              {group.case.case_no && (
+                                <p className="text-sm text-gray-500">{group.case.case_no}</p>
+                              )}
+                              {group.case.client?.full_name && (
+                                <p className="text-sm text-gray-500">{group.case.client.full_name}</p>
+                              )}
                             </>
                           ) : (
                             <>
                               <p className="font-medium">{group.case.title}</p>
-                              <p className="text-sm text-gray-500">{group.case.case_no || '-'}</p>
-                              <p className="text-sm text-gray-500">{group.case.client?.full_name}</p>
+                              {group.case.case_no && (
+                                <p className="text-sm text-gray-500">{group.case.case_no}</p>
+                              )}
+                              {group.case.client?.full_name && (
+                                <p className="text-sm text-gray-500">{group.case.client.full_name}</p>
+                              )}
                             </>
                           )}
                         </div>
@@ -523,7 +555,7 @@ export default function GelirGiderPage() {
 
       {/* Dosya İşlem Detayları Modal */}
       <Dialog open={caseTransactionDialogOpen} onOpenChange={setCaseTransactionDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="text-xl font-semibold">
               {selectedCaseForTransaction?.case.title} - İşlem Detayları
@@ -533,11 +565,11 @@ export default function GelirGiderPage() {
             </DialogDescription>
           </DialogHeader>
           {selectedCaseForTransaction && (
-            <div className="flex-1 flex flex-col space-y-4 overflow-hidden">
+            <div className="flex-1 min-h-0 flex flex-col space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg flex-shrink-0">
                 <div className="text-center">
                   <p className="text-xs text-gray-500 mb-1">Dosya No</p>
-                  <p className="font-semibold text-sm">{selectedCaseForTransaction?.case.case_no || '-'}</p>
+                  <p className="font-semibold text-sm">{selectedCaseForTransaction?.case.case_no || 'Belirtilmemiş'}</p>
                 </div>
                 {selectedCaseForTransaction?.case.title === 'Mahrumiyet İcra Dosyası' && selectedCaseForTransaction?.case.court_name && (
                   <div className="text-center">
@@ -562,8 +594,8 @@ export default function GelirGiderPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex-1 overflow-hidden border rounded-lg">
-                <div className="h-full overflow-y-auto">
+              <div className="flex-1 min-h-0 overflow-hidden border rounded-lg">
+                <div className="max-h-[55vh] overflow-y-auto">
                   <div className="space-y-3 p-4">
                     {(selectedCaseForTransaction?.transactions || []).map((transaction) => (
                       <div key={transaction.id} className="bg-white border rounded-lg p-4 hover:shadow-sm transition-shadow">
@@ -587,6 +619,19 @@ export default function GelirGiderPage() {
                               </span>
                             </div>
                           </div>
+                          {!isReadOnly && (
+                            <div className="ml-4 flex-shrink-0">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                title="İşlemi sil"
+                                onClick={() => handleDeleteTransaction(transaction.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
