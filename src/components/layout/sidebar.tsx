@@ -19,7 +19,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
 const menuItems = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/', label: 'Anasayfa', icon: LayoutDashboard },
   { href: '/muvekkiller', label: 'Müvekkil Yönetimi', icon: Users },
   { href: '/dosyalar', label: 'Dosya Yönetimi', icon: FileText },
   { href: '/gelir-gider', label: 'Gelir-Gider Takibi', icon: DollarSign },
@@ -64,7 +64,7 @@ export default function Sidebar() {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-center h-16 px-4 border-b border-gray-200">
-            <h1 className="text-xl font-bold text-gray-900">Hukuk Paneli</h1>
+            <h1 className="text-xl font-bold text-gray-900">Tahkim V1</h1>
           </div>
 
           {/* Navigation */}
